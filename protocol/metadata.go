@@ -21,6 +21,7 @@ import (
 	"github.com/avatarmc/mc-protocol/format"
 	"io"
 	"strconv"
+	"github.com/avatarmc/mc-protocol/encoding/nbt"
 )
 
 // Metadata is a simple index -> value map used in the Minecraft protocol.
@@ -38,6 +39,10 @@ import (
 //     format.AnyComponent
 type Metadata map[int]interface{}
 
+type MetaCompound struct {
+	*nbt.Compound
+}
+
 func readMetadata(r io.Reader) (Metadata, error) {
 	m := make(Metadata)
 	for {
@@ -50,6 +55,7 @@ func readMetadata(r io.Reader) (Metadata, error) {
 		if err != nil {
 			return m, err
 		}
+
 		switch t {
 		case 0:
 			var val int8
@@ -100,7 +106,7 @@ func readMetadata(r io.Reader) (Metadata, error) {
 			m[index] = pos
 		case 10: // Direction
 			m[index], err = ReadVarInt(r)
-		case 11:
+		case 11: // Optional UUID
 			var ok bool
 			ok, err = ReadBool(r)
 			if err != nil {
@@ -111,13 +117,27 @@ func readMetadata(r io.Reader) (Metadata, error) {
 				err = uuid.Deserialize(r)
 			}
 			m[index] = uuid
-		case 12:
+		case 12: // Block ID
 			var id VarInt
 			id, err = ReadVarInt(r)
 			m[index] = uint16(id)
+		case 13: // NBT Tag
+			if tagType, err := ReadByte(r); err != nil {
+				return m, err
+			} else if tagType == 0x0 {
+				// No data
+				m[index] = &MetaCompound{}
+			} else if tagType == 0x0A {
+				compound := nbt.NewCompound()
+				err = compound.Deserialize(r)
+				m[index] = &MetaCompound{compound}
+			} else {
+				err = errors.New("Invalid compound tag type: " + strconv.Itoa(int(tagType)))
+			}
 		default:
 			err = errors.New("invalid metadata type " + strconv.Itoa(int(t)))
 		}
+
 		if err != nil {
 			return m, err
 		}
@@ -176,6 +196,14 @@ func writeMetadata(w io.Writer, m Metadata) error {
 			}
 		case uint16:
 			WriteVarInt(w, VarInt(v))
+		case *MetaCompound: // NBT Tag
+			WriteByte(w, 13)
+			if v.Compound == nil {
+				WriteByte(w, 0x00)
+			} else {
+				WriteByte(w, 0x0A)
+				err = v.Compound.Serialize(w)
+			}
 		}
 		if err != nil {
 			return err
