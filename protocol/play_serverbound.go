@@ -327,7 +327,7 @@ type PlayerBlockPlacement struct {
 	Location                  Position
 	Face                      VarInt
 	Hand                      VarInt
-	CursorX, CursorY, CursorZ byte
+	CursorX, CursorY, CursorZ float32
 }
 
 // UseItem is sent when the client tries to use an item.

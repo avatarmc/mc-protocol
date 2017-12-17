@@ -1164,16 +1164,28 @@ func (p *PlayerBlockPlacement) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, p.Hand); err != nil {
 		return
 	}
-	tmp[0] = byte(p.CursorX >> 0)
-	if _, err = ww.Write(tmp[:1]); err != nil {
+	tmp0 := math.Float32bits(p.CursorX)
+	tmp[0] = byte(tmp0 >> 24)
+	tmp[1] = byte(tmp0 >> 16)
+	tmp[2] = byte(tmp0 >> 8)
+	tmp[3] = byte(tmp0 >> 0)
+	if _, err = ww.Write(tmp[:4]); err != nil {
 		return
 	}
-	tmp[0] = byte(p.CursorY >> 0)
-	if _, err = ww.Write(tmp[:1]); err != nil {
+	tmp1 := math.Float32bits(p.CursorY)
+	tmp[0] = byte(tmp1 >> 24)
+	tmp[1] = byte(tmp1 >> 16)
+	tmp[2] = byte(tmp1 >> 8)
+	tmp[3] = byte(tmp1 >> 0)
+	if _, err = ww.Write(tmp[:4]); err != nil {
 		return
 	}
-	tmp[0] = byte(p.CursorZ >> 0)
-	if _, err = ww.Write(tmp[:1]); err != nil {
+	tmp2 := math.Float32bits(p.CursorZ)
+	tmp[0] = byte(tmp2 >> 24)
+	tmp[1] = byte(tmp2 >> 16)
+	tmp[2] = byte(tmp2 >> 8)
+	tmp[3] = byte(tmp2 >> 0)
+	if _, err = ww.Write(tmp[:4]); err != nil {
 		return
 	}
 	return
@@ -1190,18 +1202,24 @@ func (p *PlayerBlockPlacement) read(rr io.Reader) (err error) {
 	if p.Hand, err = ReadVarInt(rr); err != nil {
 		return
 	}
-	if _, err = rr.Read(tmp[:1]); err != nil {
+	var tmp0 uint32
+	if _, err = rr.Read(tmp[:4]); err != nil {
 		return
 	}
-	p.CursorX = (byte(tmp[0]) << 0)
-	if _, err = rr.Read(tmp[:1]); err != nil {
+	tmp0 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+	p.CursorX = math.Float32frombits(tmp0)
+	var tmp1 uint32
+	if _, err = rr.Read(tmp[:4]); err != nil {
 		return
 	}
-	p.CursorY = (byte(tmp[0]) << 0)
-	if _, err = rr.Read(tmp[:1]); err != nil {
+	tmp1 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+	p.CursorY = math.Float32frombits(tmp1)
+	var tmp2 uint32
+	if _, err = rr.Read(tmp[:4]); err != nil {
 		return
 	}
-	p.CursorZ = (byte(tmp[0]) << 0)
+	tmp2 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+	p.CursorZ = math.Float32frombits(tmp2)
 	return
 }
 
