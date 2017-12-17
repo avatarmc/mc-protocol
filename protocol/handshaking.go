@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Handshaking serverbound
+//go:generate protocol-builder $GOFILE Handshaking serverbound
 
 package protocol
 
@@ -33,6 +33,7 @@ package protocol
 // by the client to the server until after login.
 //
 // This is a Minecraft packet
+// ID: 0x00
 type Handshake struct {
 	// The protocol version of the connecting client
 	ProtocolVersion VarInt

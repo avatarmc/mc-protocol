@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Status clientbound
+//go:generate protocol-builder $GOFILE Status clientbound
 
 package protocol
 
@@ -39,6 +39,7 @@ package protocol
 //     }
 //
 // This is a Minecraft packet
+// ID: 0x00
 type StatusResponse struct {
 	Status StatusReply `as:"json"`
 }
@@ -48,6 +49,7 @@ type StatusResponse struct {
 // one sent by the client.
 //
 // This is a Minecraft packet
+// ID: 0x01
 type StatusPong struct {
 	Time int64
 }

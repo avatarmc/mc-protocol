@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func (s *StatusResponse) id() int { return 0 }
+func (s *StatusResponse) id() int { return 0x00 }
 func (s *StatusResponse) write(ww io.Writer) (err error) {
 	var tmp0 []byte
 	if tmp0, err = json.Marshal(&s.Status); err != nil {
@@ -31,7 +31,7 @@ func (s *StatusResponse) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *StatusPong) id() int { return 1 }
+func (s *StatusPong) id() int { return 0x01 }
 func (s *StatusPong) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(s.Time >> 56)
@@ -57,6 +57,6 @@ func (s *StatusPong) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Status][clientbound][0] = func() Packet { return &StatusResponse{} }
-	packetCreator[Status][clientbound][1] = func() Packet { return &StatusPong{} }
+	packetCreator[Status][clientbound][0x00] = func() Packet { return &StatusResponse{} }
+	packetCreator[Status][clientbound][0x01] = func() Packet { return &StatusPong{} }
 }

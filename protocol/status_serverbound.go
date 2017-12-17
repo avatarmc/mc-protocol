@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Status serverbound
+//go:generate protocol-builder $GOFILE Status serverbound
 
 package protocol
 
@@ -22,6 +22,7 @@ package protocol
 // client
 //
 // This is a Minecraft packet
+// ID: 0x00
 type StatusRequest struct {
 }
 
@@ -31,6 +32,7 @@ type StatusRequest struct {
 // the latency between the client and the server.
 //
 // This is a Minecraft packet
+// ID: 0x01
 type StatusPing struct {
 	// The time when the ping was sent
 	Time int64

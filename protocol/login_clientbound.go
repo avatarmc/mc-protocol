@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Login clientbound
+//go:generate protocol-builder $GOFILE Login clientbound
 
 package protocol
 
@@ -25,6 +25,7 @@ import (
 // issues (e.g. too many players).
 //
 // This is a Minecraft packet
+// ID: 0x00
 type LoginDisconnect struct {
 	Reason format.AnyComponent `as:"json"`
 }
@@ -34,6 +35,7 @@ type LoginDisconnect struct {
 // in offline mode.
 //
 // This is a Minecraft packet
+// ID: 0x01
 type EncryptionRequest struct {
 	// Generally empty, left in from legacy auth
 	// but is still used by the client if provided
@@ -50,6 +52,7 @@ type EncryptionRequest struct {
 // after LoginStart (offline mode).
 //
 // This is a Minecraft packet
+// ID: 0x02
 type LoginSuccess struct {
 	// String encoding of a uuid (with hyphens)
 	UUID     string
@@ -60,6 +63,7 @@ type LoginSuccess struct {
 // login state.
 //
 // This is a Minecraft packet
+// ID: 0x03
 type SetInitialCompression struct {
 	// Threshold where a packet should be sent compressed
 	Threshold VarInt

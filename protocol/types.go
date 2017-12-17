@@ -20,7 +20,7 @@ import (
 )
 
 // Serializable is a type which can be serialized into a packet.
-// This is used by protocol_builder when the struct tag 'as' is set
+// This is used by protocol-builder when the struct tag 'as' is set
 // to "raw".
 type Serializable interface {
 	Serialize(w io.Writer) error
@@ -41,10 +41,17 @@ const (
 	Login       State = 3
 )
 
+type NextState VarInt
+
+const (
+	NextStateStatus NextState = 1
+	NextStateLogin  NextState = 2
+)
+
 const (
 	// SupportedProtocolVersion is current protocol version this package defines
-	// 210 = 1.10.x
-	SupportedProtocolVersion = 210
+	// 340 = 1.12.2
+	SupportedProtocolVersion = 340
 )
 
 const (

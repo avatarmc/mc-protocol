@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func (h *Handshake) id() int { return 0 }
+func (h *Handshake) id() int { return 0x00 }
 func (h *Handshake) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	if err = WriteVarInt(ww, h.ProtocolVersion); err != nil {
@@ -45,5 +45,5 @@ func (h *Handshake) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Handshaking][serverbound][0] = func() Packet { return &Handshake{} }
+	packetCreator[Handshaking][serverbound][0x00] = func() Packet { return &Handshake{} }
 }

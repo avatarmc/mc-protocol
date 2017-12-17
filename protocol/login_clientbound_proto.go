@@ -10,7 +10,7 @@ import (
 	"math"
 )
 
-func (l *LoginDisconnect) id() int { return 0 }
+func (l *LoginDisconnect) id() int { return 0x00 }
 func (l *LoginDisconnect) write(ww io.Writer) (err error) {
 	var tmp0 []byte
 	if tmp0, err = json.Marshal(&l.Reason); err != nil {
@@ -28,13 +28,12 @@ func (l *LoginDisconnect) read(rr io.Reader) (err error) {
 		return err
 	}
 	if err = json.Unmarshal([]byte(tmp0), &l.Reason); err != nil {
-		err = fmt.Errorf("JSON ERROR %s <= %s (%s)", err, tmp0, rr)
 		return
 	}
 	return
 }
 
-func (e *EncryptionRequest) id() int { return 1 }
+func (e *EncryptionRequest) id() int { return 0x01 }
 func (e *EncryptionRequest) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, e.ServerID); err != nil {
 		return
@@ -88,7 +87,7 @@ func (e *EncryptionRequest) read(rr io.Reader) (err error) {
 	return
 }
 
-func (l *LoginSuccess) id() int { return 2 }
+func (l *LoginSuccess) id() int { return 0x02 }
 func (l *LoginSuccess) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, l.UUID); err != nil {
 		return
@@ -123,8 +122,8 @@ func (s *SetInitialCompression) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Login][clientbound][0] = func() Packet { return &LoginDisconnect{} }
-	packetCreator[Login][clientbound][1] = func() Packet { return &EncryptionRequest{} }
-	packetCreator[Login][clientbound][2] = func() Packet { return &LoginSuccess{} }
-	packetCreator[Login][clientbound][3] = func() Packet { return &SetInitialCompression{} }
+	packetCreator[Login][clientbound][0x00] = func() Packet { return &LoginDisconnect{} }
+	packetCreator[Login][clientbound][0x01] = func() Packet { return &EncryptionRequest{} }
+	packetCreator[Login][clientbound][0x02] = func() Packet { return &LoginSuccess{} }
+	packetCreator[Login][clientbound][0x03] = func() Packet { return &SetInitialCompression{} }
 }

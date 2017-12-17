@@ -9,10 +9,27 @@ import (
 	"math"
 )
 
-func (t *TabComplete) id() int { return 0 }
+func (t *TeleportConfirm) id() int { return 0x00 }
+func (t *TeleportConfirm) write(ww io.Writer) (err error) {
+	if err = WriteVarInt(ww, t.TeleportID); err != nil {
+		return
+	}
+	return
+}
+func (t *TeleportConfirm) read(rr io.Reader) (err error) {
+	if t.TeleportID, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	return
+}
+
+func (t *TabComplete) id() int { return 0x01 }
 func (t *TabComplete) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	if err = WriteString(ww, t.Text); err != nil {
+		return
+	}
+	if err = WriteBool(ww, t.AssumeComman); err != nil {
 		return
 	}
 	if err = WriteBool(ww, t.HasTarget); err != nil {
@@ -38,6 +55,9 @@ func (t *TabComplete) read(rr io.Reader) (err error) {
 	if t.Text, err = ReadString(rr); err != nil {
 		return
 	}
+	if t.AssumeComman, err = ReadBool(rr); err != nil {
+		return
+	}
 	if t.HasTarget, err = ReadBool(rr); err != nil {
 		return
 	}
@@ -50,7 +70,7 @@ func (t *TabComplete) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *ChatMessage) id() int { return 1 }
+func (c *ChatMessage) id() int { return 0x02 }
 func (c *ChatMessage) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, c.Message); err != nil {
 		return
@@ -64,7 +84,7 @@ func (c *ChatMessage) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *ClientStatus) id() int { return 2 }
+func (c *ClientStatus) id() int { return 0x03 }
 func (c *ClientStatus) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, c.ActionID); err != nil {
 		return
@@ -78,7 +98,7 @@ func (c *ClientStatus) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *ClientSettings) id() int { return 3 }
+func (c *ClientSettings) id() int { return 0x04 }
 func (c *ClientSettings) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteString(ww, c.Locale); err != nil {
@@ -130,7 +150,7 @@ func (c *ClientSettings) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *ConfirmTransactionServerbound) id() int { return 4 }
+func (c *ConfirmTransactionServerbound) id() int { return 0x05 }
 func (c *ConfirmTransactionServerbound) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	tmp[0] = byte(c.ID >> 0)
@@ -163,7 +183,7 @@ func (c *ConfirmTransactionServerbound) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EnchantItem) id() int { return 5 }
+func (e *EnchantItem) id() int { return 0x06 }
 func (e *EnchantItem) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	tmp[0] = byte(e.ID >> 0)
@@ -189,7 +209,7 @@ func (e *EnchantItem) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *ClickWindow) id() int { return 6 }
+func (c *ClickWindow) id() int { return 0x07 }
 func (c *ClickWindow) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	tmp[0] = byte(c.ID >> 0)
@@ -247,7 +267,7 @@ func (c *ClickWindow) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *CloseWindow) id() int { return 7 }
+func (c *CloseWindow) id() int { return 0x08 }
 func (c *CloseWindow) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	tmp[0] = byte(c.ID >> 0)
@@ -265,7 +285,7 @@ func (c *CloseWindow) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PluginMessageServerbound) id() int { return 8 }
+func (p *PluginMessageServerbound) id() int { return 0x09 }
 func (p *PluginMessageServerbound) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, p.Channel); err != nil {
 		return
@@ -285,7 +305,7 @@ func (p *PluginMessageServerbound) read(rr io.Reader) (err error) {
 	return
 }
 
-func (u *UseEntity) id() int { return 9 }
+func (u *UseEntity) id() int { return 0x0A }
 func (u *UseEntity) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	if err = WriteVarInt(ww, u.TargetID); err != nil {
@@ -363,21 +383,46 @@ func (u *UseEntity) read(rr io.Reader) (err error) {
 	return
 }
 
-func (k *KeepAliveServerbound) id() int { return 10 }
+func (k *KeepAliveServerbound) id() int { return 0x0B }
 func (k *KeepAliveServerbound) write(ww io.Writer) (err error) {
-	if err = WriteVarInt(ww, k.ID); err != nil {
+	var tmp [8]byte
+	tmp[0] = byte(k.ID >> 56)
+	tmp[1] = byte(k.ID >> 48)
+	tmp[2] = byte(k.ID >> 40)
+	tmp[3] = byte(k.ID >> 32)
+	tmp[4] = byte(k.ID >> 24)
+	tmp[5] = byte(k.ID >> 16)
+	tmp[6] = byte(k.ID >> 8)
+	tmp[7] = byte(k.ID >> 0)
+	if _, err = ww.Write(tmp[:8]); err != nil {
 		return
 	}
 	return
 }
 func (k *KeepAliveServerbound) read(rr io.Reader) (err error) {
-	if k.ID, err = ReadVarInt(rr); err != nil {
+	var tmp [8]byte
+	if _, err = rr.Read(tmp[:8]); err != nil {
+		return
+	}
+	k.ID = int64((uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56))
+	return
+}
+
+func (p *Player) id() int { return 0x0C }
+func (p *Player) write(ww io.Writer) (err error) {
+	if err = WriteBool(ww, p.OnGround); err != nil {
+		return
+	}
+	return
+}
+func (p *Player) read(rr io.Reader) (err error) {
+	if p.OnGround, err = ReadBool(rr); err != nil {
 		return
 	}
 	return
 }
 
-func (p *PlayerPosition) id() int { return 11 }
+func (p *PlayerPosition) id() int { return 0x0D }
 func (p *PlayerPosition) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp0 := math.Float64bits(p.X)
@@ -447,7 +492,7 @@ func (p *PlayerPosition) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerPositionLook) id() int { return 12 }
+func (p *PlayerPositionLook) id() int { return 0x0E }
 func (p *PlayerPositionLook) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp0 := math.Float64bits(p.X)
@@ -545,7 +590,7 @@ func (p *PlayerPositionLook) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerLook) id() int { return 13 }
+func (p *PlayerLook) id() int { return 0x0F }
 func (p *PlayerLook) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp0 := math.Float32bits(p.Yaw)
@@ -589,21 +634,149 @@ func (p *PlayerLook) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *Player) id() int { return 14 }
-func (p *Player) write(ww io.Writer) (err error) {
-	if err = WriteBool(ww, p.OnGround); err != nil {
+func (p *PlayerVehicleMove) id() int { return 0x10 }
+func (p *PlayerVehicleMove) write(ww io.Writer) (err error) {
+	var tmp [8]byte
+	tmp0 := math.Float64bits(p.X)
+	tmp[0] = byte(tmp0 >> 56)
+	tmp[1] = byte(tmp0 >> 48)
+	tmp[2] = byte(tmp0 >> 40)
+	tmp[3] = byte(tmp0 >> 32)
+	tmp[4] = byte(tmp0 >> 24)
+	tmp[5] = byte(tmp0 >> 16)
+	tmp[6] = byte(tmp0 >> 8)
+	tmp[7] = byte(tmp0 >> 0)
+	if _, err = ww.Write(tmp[:8]); err != nil {
+		return
+	}
+	tmp1 := math.Float64bits(p.Y)
+	tmp[0] = byte(tmp1 >> 56)
+	tmp[1] = byte(tmp1 >> 48)
+	tmp[2] = byte(tmp1 >> 40)
+	tmp[3] = byte(tmp1 >> 32)
+	tmp[4] = byte(tmp1 >> 24)
+	tmp[5] = byte(tmp1 >> 16)
+	tmp[6] = byte(tmp1 >> 8)
+	tmp[7] = byte(tmp1 >> 0)
+	if _, err = ww.Write(tmp[:8]); err != nil {
+		return
+	}
+	tmp2 := math.Float64bits(p.Z)
+	tmp[0] = byte(tmp2 >> 56)
+	tmp[1] = byte(tmp2 >> 48)
+	tmp[2] = byte(tmp2 >> 40)
+	tmp[3] = byte(tmp2 >> 32)
+	tmp[4] = byte(tmp2 >> 24)
+	tmp[5] = byte(tmp2 >> 16)
+	tmp[6] = byte(tmp2 >> 8)
+	tmp[7] = byte(tmp2 >> 0)
+	if _, err = ww.Write(tmp[:8]); err != nil {
+		return
+	}
+	tmp3 := math.Float32bits(p.Yaw)
+	tmp[0] = byte(tmp3 >> 24)
+	tmp[1] = byte(tmp3 >> 16)
+	tmp[2] = byte(tmp3 >> 8)
+	tmp[3] = byte(tmp3 >> 0)
+	if _, err = ww.Write(tmp[:4]); err != nil {
+		return
+	}
+	tmp4 := math.Float32bits(p.Pitch)
+	tmp[0] = byte(tmp4 >> 24)
+	tmp[1] = byte(tmp4 >> 16)
+	tmp[2] = byte(tmp4 >> 8)
+	tmp[3] = byte(tmp4 >> 0)
+	if _, err = ww.Write(tmp[:4]); err != nil {
 		return
 	}
 	return
 }
-func (p *Player) read(rr io.Reader) (err error) {
-	if p.OnGround, err = ReadBool(rr); err != nil {
+func (p *PlayerVehicleMove) read(rr io.Reader) (err error) {
+	var tmp [8]byte
+	var tmp0 uint64
+	if _, err = rr.Read(tmp[:8]); err != nil {
+		return
+	}
+	tmp0 = (uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56)
+	p.X = math.Float64frombits(tmp0)
+	var tmp1 uint64
+	if _, err = rr.Read(tmp[:8]); err != nil {
+		return
+	}
+	tmp1 = (uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56)
+	p.Y = math.Float64frombits(tmp1)
+	var tmp2 uint64
+	if _, err = rr.Read(tmp[:8]); err != nil {
+		return
+	}
+	tmp2 = (uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56)
+	p.Z = math.Float64frombits(tmp2)
+	var tmp3 uint32
+	if _, err = rr.Read(tmp[:4]); err != nil {
+		return
+	}
+	tmp3 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+	p.Yaw = math.Float32frombits(tmp3)
+	var tmp4 uint32
+	if _, err = rr.Read(tmp[:4]); err != nil {
+		return
+	}
+	tmp4 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+	p.Pitch = math.Float32frombits(tmp4)
+	return
+}
+
+func (s *SteerBoat) id() int { return 0x11 }
+func (s *SteerBoat) write(ww io.Writer) (err error) {
+	if err = WriteBool(ww, s.LeftPaddle); err != nil {
+		return
+	}
+	if err = WriteBool(ww, s.RightPaddle); err != nil {
+		return
+	}
+	return
+}
+func (s *SteerBoat) read(rr io.Reader) (err error) {
+	if s.LeftPaddle, err = ReadBool(rr); err != nil {
+		return
+	}
+	if s.RightPaddle, err = ReadBool(rr); err != nil {
 		return
 	}
 	return
 }
 
-func (c *ClientAbilities) id() int { return 15 }
+func (c *CraftRecipeRequest) id() int { return 0x12 }
+func (c *CraftRecipeRequest) write(ww io.Writer) (err error) {
+	var tmp [1]byte
+	tmp[0] = byte(c.WindowID >> 0)
+	if _, err = ww.Write(tmp[:1]); err != nil {
+		return
+	}
+	if err = WriteVarInt(ww, c.RecipeID); err != nil {
+		return
+	}
+	if err = WriteBool(ww, c.MakeAll); err != nil {
+		return
+	}
+	return
+}
+func (c *CraftRecipeRequest) read(rr io.Reader) (err error) {
+	var tmp [1]byte
+	if _, err = rr.Read(tmp[:1]); err != nil {
+		return
+	}
+	c.WindowID = (byte(tmp[0]) << 0)
+	if c.RecipeID, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if c.MakeAll, err = ReadBool(rr); err != nil {
+		return
+	}
+	return
+}
+
+func (c *ClientAbilities) id() int { return 0x13 }
 func (c *ClientAbilities) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp[0] = byte(c.Flags >> 0)
@@ -649,7 +822,7 @@ func (c *ClientAbilities) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerDigging) id() int { return 16 }
+func (p *PlayerDigging) id() int { return 0x14 }
 func (p *PlayerDigging) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(p.Status >> 0)
@@ -690,7 +863,7 @@ func (p *PlayerDigging) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerAction) id() int { return 17 }
+func (p *PlayerAction) id() int { return 0x15 }
 func (p *PlayerAction) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, p.EntityID); err != nil {
 		return
@@ -716,7 +889,7 @@ func (p *PlayerAction) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SteerVehicle) id() int { return 18 }
+func (s *SteerVehicle) id() int { return 0x16 }
 func (s *SteerVehicle) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp0 := math.Float32bits(s.Sideways)
@@ -762,27 +935,95 @@ func (s *SteerVehicle) read(rr io.Reader) (err error) {
 	return
 }
 
-func (r *ResourcePackStatus) id() int { return 19 }
-func (r *ResourcePackStatus) write(ww io.Writer) (err error) {
-	if err = WriteString(ww, r.Hash); err != nil {
+func (c *CraftingBookData) id() int { return 0x17 }
+func (c *CraftingBookData) write(ww io.Writer) (err error) {
+	var tmp [4]byte
+	if err = WriteVarInt(ww, c.Type); err != nil {
 		return
 	}
+	if c.Type == 0 {
+		tmp0 := math.Float32bits(c.RecipeID)
+		tmp[0] = byte(tmp0 >> 24)
+		tmp[1] = byte(tmp0 >> 16)
+		tmp[2] = byte(tmp0 >> 8)
+		tmp[3] = byte(tmp0 >> 0)
+		if _, err = ww.Write(tmp[:4]); err != nil {
+			return
+		}
+	}
+	if c.Type == 1 {
+		if err = WriteBool(ww, c.CraftingBookOpen); err != nil {
+			return
+		}
+		if err = WriteBool(ww, c.CraftingBookFilter); err != nil {
+			return
+		}
+	}
+	return
+}
+func (c *CraftingBookData) read(rr io.Reader) (err error) {
+	var tmp [4]byte
+	if c.Type, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if c.Type == 0 {
+		var tmp0 uint32
+		if _, err = rr.Read(tmp[:4]); err != nil {
+			return
+		}
+		tmp0 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+		c.RecipeID = math.Float32frombits(tmp0)
+	}
+	if c.Type == 1 {
+		if c.CraftingBookOpen, err = ReadBool(rr); err != nil {
+			return
+		}
+		if c.CraftingBookFilter, err = ReadBool(rr); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (r *ResourcePackStatus) id() int { return 0x18 }
+func (r *ResourcePackStatus) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, r.Result); err != nil {
 		return
 	}
 	return
 }
 func (r *ResourcePackStatus) read(rr io.Reader) (err error) {
-	if r.Hash, err = ReadString(rr); err != nil {
-		return
-	}
 	if r.Result, err = ReadVarInt(rr); err != nil {
 		return
 	}
 	return
 }
 
-func (h *HeldItemChange) id() int { return 20 }
+func (a *AdvancementTab) id() int { return 0x19 }
+func (a *AdvancementTab) write(ww io.Writer) (err error) {
+	if err = WriteVarInt(ww, a.Action); err != nil {
+		return
+	}
+	if a.Action == 0 {
+		if err = WriteVarInt(ww, a.TabID); err != nil {
+			return
+		}
+	}
+	return
+}
+func (a *AdvancementTab) read(rr io.Reader) (err error) {
+	if a.Action, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if a.Action == 0 {
+		if a.TabID, err = ReadVarInt(rr); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (h *HeldItemChange) id() int { return 0x1A }
 func (h *HeldItemChange) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	tmp[0] = byte(h.Slot >> 8)
@@ -801,7 +1042,7 @@ func (h *HeldItemChange) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *CreativeInventoryAction) id() int { return 21 }
+func (c *CreativeInventoryAction) id() int { return 0x1B }
 func (c *CreativeInventoryAction) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	tmp[0] = byte(c.Slot >> 8)
@@ -826,7 +1067,7 @@ func (c *CreativeInventoryAction) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SetSign) id() int { return 22 }
+func (s *SetSign) id() int { return 0x1C }
 func (s *SetSign) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(s.Location >> 56)
@@ -875,7 +1116,7 @@ func (s *SetSign) read(rr io.Reader) (err error) {
 	return
 }
 
-func (a *ArmSwing) id() int { return 23 }
+func (a *ArmSwing) id() int { return 0x1D }
 func (a *ArmSwing) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, a.Hand); err != nil {
 		return
@@ -889,7 +1130,7 @@ func (a *ArmSwing) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SpectateTeleport) id() int { return 24 }
+func (s *SpectateTeleport) id() int { return 0x1E }
 func (s *SpectateTeleport) write(ww io.Writer) (err error) {
 	if err = s.Target.Serialize(ww); err != nil {
 		return
@@ -903,7 +1144,7 @@ func (s *SpectateTeleport) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerBlockPlacement) id() int { return 25 }
+func (p *PlayerBlockPlacement) id() int { return 0x1F }
 func (p *PlayerBlockPlacement) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(p.Location >> 56)
@@ -964,7 +1205,7 @@ func (p *PlayerBlockPlacement) read(rr io.Reader) (err error) {
 	return
 }
 
-func (u *UseItem) id() int { return 26 }
+func (u *UseItem) id() int { return 0x20 }
 func (u *UseItem) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, u.Hand); err != nil {
 		return
@@ -979,31 +1220,37 @@ func (u *UseItem) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Play][serverbound][0] = func() Packet { return &TabComplete{} }
-	packetCreator[Play][serverbound][1] = func() Packet { return &ChatMessage{} }
-	packetCreator[Play][serverbound][2] = func() Packet { return &ClientStatus{} }
-	packetCreator[Play][serverbound][3] = func() Packet { return &ClientSettings{} }
-	packetCreator[Play][serverbound][4] = func() Packet { return &ConfirmTransactionServerbound{} }
-	packetCreator[Play][serverbound][5] = func() Packet { return &EnchantItem{} }
-	packetCreator[Play][serverbound][6] = func() Packet { return &ClickWindow{} }
-	packetCreator[Play][serverbound][7] = func() Packet { return &CloseWindow{} }
-	packetCreator[Play][serverbound][8] = func() Packet { return &PluginMessageServerbound{} }
-	packetCreator[Play][serverbound][9] = func() Packet { return &UseEntity{} }
-	packetCreator[Play][serverbound][10] = func() Packet { return &KeepAliveServerbound{} }
-	packetCreator[Play][serverbound][11] = func() Packet { return &PlayerPosition{} }
-	packetCreator[Play][serverbound][12] = func() Packet { return &PlayerPositionLook{} }
-	packetCreator[Play][serverbound][13] = func() Packet { return &PlayerLook{} }
-	packetCreator[Play][serverbound][14] = func() Packet { return &Player{} }
-	packetCreator[Play][serverbound][15] = func() Packet { return &ClientAbilities{} }
-	packetCreator[Play][serverbound][16] = func() Packet { return &PlayerDigging{} }
-	packetCreator[Play][serverbound][17] = func() Packet { return &PlayerAction{} }
-	packetCreator[Play][serverbound][18] = func() Packet { return &SteerVehicle{} }
-	packetCreator[Play][serverbound][19] = func() Packet { return &ResourcePackStatus{} }
-	packetCreator[Play][serverbound][20] = func() Packet { return &HeldItemChange{} }
-	packetCreator[Play][serverbound][21] = func() Packet { return &CreativeInventoryAction{} }
-	packetCreator[Play][serverbound][22] = func() Packet { return &SetSign{} }
-	packetCreator[Play][serverbound][23] = func() Packet { return &ArmSwing{} }
-	packetCreator[Play][serverbound][24] = func() Packet { return &SpectateTeleport{} }
-	packetCreator[Play][serverbound][25] = func() Packet { return &PlayerBlockPlacement{} }
-	packetCreator[Play][serverbound][26] = func() Packet { return &UseItem{} }
+	packetCreator[Play][serverbound][0x00] = func() Packet { return &TeleportConfirm{} }
+	packetCreator[Play][serverbound][0x01] = func() Packet { return &TabComplete{} }
+	packetCreator[Play][serverbound][0x02] = func() Packet { return &ChatMessage{} }
+	packetCreator[Play][serverbound][0x03] = func() Packet { return &ClientStatus{} }
+	packetCreator[Play][serverbound][0x04] = func() Packet { return &ClientSettings{} }
+	packetCreator[Play][serverbound][0x05] = func() Packet { return &ConfirmTransactionServerbound{} }
+	packetCreator[Play][serverbound][0x06] = func() Packet { return &EnchantItem{} }
+	packetCreator[Play][serverbound][0x07] = func() Packet { return &ClickWindow{} }
+	packetCreator[Play][serverbound][0x08] = func() Packet { return &CloseWindow{} }
+	packetCreator[Play][serverbound][0x09] = func() Packet { return &PluginMessageServerbound{} }
+	packetCreator[Play][serverbound][0x0A] = func() Packet { return &UseEntity{} }
+	packetCreator[Play][serverbound][0x0B] = func() Packet { return &KeepAliveServerbound{} }
+	packetCreator[Play][serverbound][0x0C] = func() Packet { return &Player{} }
+	packetCreator[Play][serverbound][0x0D] = func() Packet { return &PlayerPosition{} }
+	packetCreator[Play][serverbound][0x0E] = func() Packet { return &PlayerPositionLook{} }
+	packetCreator[Play][serverbound][0x0F] = func() Packet { return &PlayerLook{} }
+	packetCreator[Play][serverbound][0x10] = func() Packet { return &PlayerVehicleMove{} }
+	packetCreator[Play][serverbound][0x11] = func() Packet { return &SteerBoat{} }
+	packetCreator[Play][serverbound][0x12] = func() Packet { return &CraftRecipeRequest{} }
+	packetCreator[Play][serverbound][0x13] = func() Packet { return &ClientAbilities{} }
+	packetCreator[Play][serverbound][0x14] = func() Packet { return &PlayerDigging{} }
+	packetCreator[Play][serverbound][0x15] = func() Packet { return &PlayerAction{} }
+	packetCreator[Play][serverbound][0x16] = func() Packet { return &SteerVehicle{} }
+	packetCreator[Play][serverbound][0x17] = func() Packet { return &CraftingBookData{} }
+	packetCreator[Play][serverbound][0x18] = func() Packet { return &ResourcePackStatus{} }
+	packetCreator[Play][serverbound][0x19] = func() Packet { return &AdvancementTab{} }
+	packetCreator[Play][serverbound][0x1A] = func() Packet { return &HeldItemChange{} }
+	packetCreator[Play][serverbound][0x1B] = func() Packet { return &CreativeInventoryAction{} }
+	packetCreator[Play][serverbound][0x1C] = func() Packet { return &SetSign{} }
+	packetCreator[Play][serverbound][0x1D] = func() Packet { return &ArmSwing{} }
+	packetCreator[Play][serverbound][0x1E] = func() Packet { return &SpectateTeleport{} }
+	packetCreator[Play][serverbound][0x1F] = func() Packet { return &PlayerBlockPlacement{} }
+	packetCreator[Play][serverbound][0x20] = func() Packet { return &UseItem{} }
 }

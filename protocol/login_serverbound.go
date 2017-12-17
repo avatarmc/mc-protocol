@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Login serverbound
+//go:generate protocol-builder $GOFILE Login serverbound
 
 package protocol
 
@@ -21,6 +21,7 @@ package protocol
 // the player in online mode.
 //
 // This is a Minecraft packet
+// ID: 0x00
 type LoginStart struct {
 	Username string
 }
@@ -30,6 +31,7 @@ type LoginStart struct {
 // encryption.
 //
 // This is a Minecraft packet
+// ID: 0x01
 type EncryptionResponse struct {
 	// The key for the AES/CFB8 cipher encrypted with the
 	// public key

@@ -9,7 +9,7 @@ import (
 	"math"
 )
 
-func (l *LoginStart) id() int { return 0 }
+func (l *LoginStart) id() int { return 0x00 }
 func (l *LoginStart) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, l.Username); err != nil {
 		return
@@ -23,7 +23,7 @@ func (l *LoginStart) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EncryptionResponse) id() int { return 1 }
+func (e *EncryptionResponse) id() int { return 0x01 }
 func (e *EncryptionResponse) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, VarInt(len(e.SharedSecret))); err != nil {
 		return
@@ -72,6 +72,6 @@ func (e *EncryptionResponse) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Login][serverbound][0] = func() Packet { return &LoginStart{} }
-	packetCreator[Login][serverbound][1] = func() Packet { return &EncryptionResponse{} }
+	packetCreator[Login][serverbound][0x00] = func() Packet { return &LoginStart{} }
+	packetCreator[Login][serverbound][0x01] = func() Packet { return &EncryptionResponse{} }
 }

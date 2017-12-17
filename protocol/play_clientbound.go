@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Play clientbound
+//go:generate protocol-builder $GOFILE Play clientbound
 
 package protocol
 
@@ -386,7 +386,7 @@ type ChangeGameState struct {
 // This is a Minecraft packet
 // ID: 0x1F
 type KeepAliveClientbound struct {
-	ID VarInt
+	ID int64
 }
 
 // ChunkData sends or updates a single chunk on the client. If New is set
@@ -485,10 +485,18 @@ type MapIcon struct {
 	X, Z          int8
 }
 
-// EntityMove moves the entity with the id by the offsets provided.
+// Entity does nothing. It is a result of subclassing used in Minecraft.
 //
 // This is a Minecraft packet
 // ID: 0x25
+type Entity struct {
+	EntityID VarInt
+}
+
+// EntityMove moves the entity with the id by the offsets provided.
+//
+// This is a Minecraft packet
+// ID: 0x26
 type EntityMove struct {
 	EntityID               VarInt
 	DeltaX, DeltaY, DeltaZ int16
@@ -498,7 +506,7 @@ type EntityMove struct {
 // EntityLookAndMove is a combination of EntityMove and EntityLook.
 //
 // This is a Minecraft packet
-// ID: 0x26
+// ID: 0x27
 type EntityLookAndMove struct {
 	EntityID               VarInt
 	DeltaX, DeltaY, DeltaZ int16
@@ -509,21 +517,15 @@ type EntityLookAndMove struct {
 // EntityLook rotates the entity to the new angles provided.
 //
 // This is a Minecraft packet
-// ID: 0x27
+// ID: 0x28
 type EntityLook struct {
 	EntityID   VarInt
 	Yaw, Pitch int8
 	OnGround   bool
 }
 
-// Entity does nothing. It is a result of subclassing used in Minecraft.
+// VehicleMoveClientbound is used to update the vehicle information of the current player.
 //
-// This is a Minecraft packet
-// ID: 0x28
-type Entity struct {
-	EntityID VarInt
-}
-
 // This is a Minecraft packet
 // ID: 0x29
 type VebicleMoveClientbound struct {
@@ -540,11 +542,20 @@ type SignEditorOpen struct {
 	Location Position
 }
 
+// CraftRecipeResponse is used to respond to the CraftRecipeRequest packet.
+//
+// This is a Minecraft packet
+// ID: 0x2B
+type CraftRecipeResponse struct {
+	WindowID byte
+	Recipe   VarInt
+}
+
 // PlayerAbilities is used to modify the players current abilities. Flying,
 // creative, god mode etc.
 //
 // This is a Minecraft packet
-// ID: 0x2B
+// ID: 0x2C
 type PlayerAbilities struct {
 	Flags        byte
 	FlyingSpeed  float32
@@ -555,7 +566,7 @@ type PlayerAbilities struct {
 // clue.
 //
 // This is a Minecraft packet
-// ID: 0x2C
+// ID: 0x2D
 type CombatEvent struct {
 	Event    VarInt
 	Duration VarInt              `if:".Event == 1"`
@@ -568,7 +579,7 @@ type CombatEvent struct {
 // to provide skin and username information as well as ping and gamemode info.
 //
 // This is a Minecraft packet
-// ID: 0x2D
+// ID: 0x2E
 type PlayerInfo struct {
 	Action  VarInt
 	Players []PlayerDetail `length:"VarInt"`
@@ -582,7 +593,7 @@ type PlayerDetail struct {
 	GameMode    VarInt              `if:"..Action==0 ..Action == 1"`
 	Ping        VarInt              `if:"..Action==0 ..Action == 2"`
 	HasDisplay  bool                `if:"..Action==0 ..Action == 3"`
-	DisplayName format.AnyComponent `as:"json" if:".HasDisplay==true"`
+	DisplayName format.AnyComponent `as:"json" if:".HasDisplay == true"`
 }
 
 // PlayerProperty is used by PlayerDetail
@@ -598,7 +609,7 @@ type PlayerProperty struct {
 // otherwise will reject future packets.
 //
 // This is a Minecraft packet
-// ID: 0x2E
+// ID: 0x2F
 type TeleportPlayer struct {
 	X, Y, Z    float64
 	Yaw, Pitch float32
@@ -609,16 +620,25 @@ type TeleportPlayer struct {
 // EntityUsedBed is sent by the server when a player goes to bed.
 //
 // This is a Minecraft packet
-// ID: 0x2F
+// ID: 0x30
 type EntityUsedBed struct {
 	EntityID VarInt
 	Location Position
 }
 
+// This is a Minecraft packet
+// ID: 0x31
+type UnlockRecipes struct {
+	Action                               VarInt
+	CraftingBookOpen, FilteringCraftable bool
+	RecipeIDs                            []VarInt `length:"VarInt"`
+	RecipeIDs2                           []VarInt `length:"VarInt",if:".Action==0"`
+}
+
 // EntityDestroy destroys the entities with the ids in the provided slice.
 //
 // This is a Minecraft packet
-// ID: 0x30
+// ID: 0x32
 type EntityDestroy struct {
 	EntityIDs []VarInt `length:"VarInt"`
 }
@@ -626,7 +646,7 @@ type EntityDestroy struct {
 // EntityRemoveEffect removes an effect from an entity.
 //
 // This is a Minecraft packet
-// ID: 0x31
+// ID: 0x33
 type EntityRemoveEffect struct {
 	EntityID VarInt
 	EffectID int8
@@ -637,7 +657,7 @@ type EntityRemoveEffect struct {
 // is obtained the client will use it.
 //
 // This is a Minecraft packet
-// ID: 0x32
+// ID: 0x34
 type ResourcePackSend struct {
 	URL  string
 	Hash string
@@ -646,7 +666,7 @@ type ResourcePackSend struct {
 // Respawn is sent to respawn the player after death or when they move worlds.
 //
 // This is a Minecraft packet
-// ID: 0x33
+// ID: 0x35
 type Respawn struct {
 	Dimension  int32
 	Difficulty byte
@@ -657,16 +677,25 @@ type Respawn struct {
 // EntityHeadLook rotates an entity's head to the new angle.
 //
 // This is a Minecraft packet
-// ID: 0x34
+// ID: 0x36
 type EntityHeadLook struct {
 	EntityID VarInt
 	HeadYaw  int8
 }
 
+// SelectAdvancementTab selects an advancement tab on the client.
+//
+// This is a Minecraft packet
+// ID: 0x37
+type SelectAdvancementTab struct {
+	HasID bool
+	Tab   string `if:".HasID == true`
+}
+
 // WorldBorder configures the world's border.
 //
 // This is a Minecraft packet
-// ID: 0x35
+// ID: 0x38
 type WorldBorder struct {
 	Action         VarInt
 	OldRadius      float64 `if:".Action == 3 .Action == 1"`
@@ -682,7 +711,7 @@ type WorldBorder struct {
 // Use the player's id to de-spectate.
 //
 // This is a Minecraft packet
-// ID: 0x36
+// ID: 0x39
 type Camera struct {
 	TargetID VarInt
 }
@@ -690,7 +719,7 @@ type Camera struct {
 // SetCurrentHotbarSlot changes the player's currently selected hotbar item.
 //
 // This is a Minecraft packet
-// ID: 0x37
+// ID: 0x3A
 type SetCurrentHotbarSlot struct {
 	Slot byte
 }
@@ -698,7 +727,7 @@ type SetCurrentHotbarSlot struct {
 // ScoreboardDisplay is used to set the display position of a scoreboard.
 //
 // This is a Minecraft packet
-// ID: 0x38
+// ID: 0x3B
 type ScoreboardDisplay struct {
 	Position byte
 	Name     string
@@ -707,28 +736,27 @@ type ScoreboardDisplay struct {
 // EntityMetadata updates the metadata for an entity.
 //
 // This is a Minecraft packet
-// ID: 0x39
+// ID: 0x3C
 type EntityMetadata struct {
 	EntityID VarInt
 	Metadata Metadata
 }
 
-// EntityAttach attaches to entities together, either by mounting or leashing.
+// EntityAttach attaches to entities together by leashing.
 // -1 can be used at the EntityID to deattach.
 //
 // This is a Minecraft packet
-// ID: 0x3A
+// ID: 0x3D
 type EntityAttach struct {
 	EntityID int32
 	Vehicle  int32
-	Leash    bool
 }
 
 // EntityVelocity sets the velocity of an entity in 1/8000 of a block
 // per a tick.
 //
 // This is a Minecraft packet
-// ID: 0x3B
+// ID: 0x3E
 type EntityVelocity struct {
 	EntityID                        VarInt
 	VelocityX, VelocityY, VelocityZ int16
@@ -739,7 +767,7 @@ type EntityVelocity struct {
 // chestplate and helmet respectively.
 //
 // This is a Minecraft packet
-// ID: 0x3C
+// ID: 0x3F
 type EntityEquipment struct {
 	EntityID VarInt
 	Slot     VarInt
@@ -749,7 +777,7 @@ type EntityEquipment struct {
 // SetExperience updates the experience bar on the client.
 //
 // This is a Minecraft packet
-// ID: 0x3D
+// ID: 0x40
 type SetExperience struct {
 	ExperienceBar   float32
 	Level           VarInt
@@ -759,7 +787,7 @@ type SetExperience struct {
 // UpdateHealth is sent by the server to update the player's health and food.
 //
 // This is a Minecraft packet
-// ID: 0x3E
+// ID: 0x41
 type UpdateHealth struct {
 	Health         float32
 	Food           VarInt
@@ -769,7 +797,7 @@ type UpdateHealth struct {
 // ScoreboardObjective creates/updates a scoreboard objective.
 //
 // This is a Minecraft packet
-// ID: 0x3F
+// ID: 0x42
 type ScoreboardObjective struct {
 	Name  string
 	Mode  byte
@@ -778,7 +806,7 @@ type ScoreboardObjective struct {
 }
 
 // This is a Minecraft packet
-// ID: 0x40
+// ID: 0x43
 type SetPassengers struct {
 	EntityID   VarInt
 	Passengers []VarInt `length:"VarInt"`
@@ -787,7 +815,7 @@ type SetPassengers struct {
 // Teams creates and updates teams
 //
 // This is a Minecraft packet
-// ID: 0x41
+// ID: 0x44
 type Teams struct {
 	Name              string
 	Mode              byte
@@ -805,7 +833,7 @@ type Teams struct {
 // objective.
 //
 // This is a Minecraft packet
-// ID: 0x42
+// ID: 0x45
 type UpdateScore struct {
 	Name       string
 	Action     byte
@@ -817,7 +845,7 @@ type UpdateScore struct {
 // only used by the client for the compass.
 //
 // This is a Minecraft packet
-// ID: 0x43
+// ID: 0x46
 type SpawnPosition struct {
 	Location Position
 }
@@ -828,7 +856,7 @@ type SpawnPosition struct {
 // so it is a good idea to sent this now and again
 //
 // This is a Minecraft packet
-// ID: 0x44
+// ID: 0x47
 type TimeUpdate struct {
 	WorldAge  int64
 	TimeOfDay int64
@@ -837,18 +865,19 @@ type TimeUpdate struct {
 // Title configures an on-screen title.
 //
 // This is a Minecraft packet
-// ID: 0x45
+// ID: 0x48
 type Title struct {
-	Action   VarInt
-	Title    format.AnyComponent `as:"json" if:".Action == 0"`
-	SubTitle format.AnyComponent `as:"json" if:".Action == 1"`
-	FadeIn   int32               `if:".Action == 2"`
-	FadeStay int32               `if:".Action == 2"`
-	FadeOut  int32               `if:".Action == 2"`
+	Action    VarInt
+	Title     format.AnyComponent `as:"json" if:".Action == 0"`
+	SubTitle  format.AnyComponent `as:"json" if:".Action == 1"`
+	ActionBar format.AnyComponent `as:"json" if:".Action == 2"`
+	FadeIn    int32               `if:".Action == 3"`
+	FadeStay  int32               `if:".Action == 3"`
+	FadeOut   int32               `if:".Action == 3"`
 }
 
 // This is a Minecraft packet
-// ID: 0x46
+// ID: 0x49
 type SoundEffect struct {
 	SoundID       VarInt
 	Category      VarInt
@@ -859,7 +888,7 @@ type SoundEffect struct {
 // PlayerListHeaderFooter updates the header/footer of the player list.
 //
 // This is a Minecraft packet
-// ID: 0x47
+// ID: 0x4A
 type PlayerListHeaderFooter struct {
 	Header format.AnyComponent `as:"json"`
 	Footer format.AnyComponent `as:"json"`
@@ -869,17 +898,18 @@ type PlayerListHeaderFooter struct {
 // does not destroy the entity.
 //
 // This is a Minecraft packet
-// ID: 0x48
+// ID: 0x4B
 type CollectItem struct {
 	CollectedEntityID VarInt
 	CollectorEntityID VarInt
+	Count             VarInt
 }
 
 // EntityTeleport teleports the entity to the target location. This is
 // sent if the entity moves further than EntityMove allows.
 //
 // This is a Minecraft packet
-// ID: 0x49
+// ID: 0x4C
 type EntityTeleport struct {
 	EntityID   VarInt
 	X, Y, Z    float64
@@ -887,10 +917,54 @@ type EntityTeleport struct {
 	OnGround   bool
 }
 
+// This is a Minecraft packet
+// ID: 0x4D
+type Advancements struct {
+	Reset        bool
+	Advancements []Advancement `length:"VarInt"`
+	Remove       []string `length:"VarInt"`
+	Progress     []Progress `length:"VarInt"`
+}
+
+type Advancement struct {
+	Key          string
+	HasParent    bool
+	Parent       string `if:".HasParent == true"`
+	HasDisplay   bool
+	Display      AdvancementDisplay `if:".HasDisplay == true"`
+	Criteria     []string           `length:"VarInt"`
+	Requirements []Requirement      `length:"VarInt"`
+}
+
+type AdvancementDisplay struct {
+	Title                format.AnyComponent `as:"json"`
+	Description          format.AnyComponent `as:"json"`
+	Item                 ItemStack `as:"raw"`
+	FrameType            VarInt
+	Flags                int32
+	BackgroundTexture    string `if:".Flags&1 == 1"`
+	X, Y                 float32
+}
+
+type Progress struct {
+	Key      string
+	Criteria []CriterionProgress `length:"VarInt"`
+}
+
+type CriterionProgress struct {
+	Key          string
+	Achieved     bool
+	AchievedTime int64 `if:".Achieved == true"`
+}
+
+type Requirement struct {
+	Criteria []string `length:"VarInt"`
+}
+
 // EntityProperties updates the properties for an entity.
 //
 // This is a Minecraft packet
-// ID: 0x4A
+// ID: 0x4E
 type EntityProperties struct {
 	EntityID   VarInt
 	Properties []EntityProperty `length:"int32"`
@@ -915,7 +989,7 @@ type PropertyModifier struct {
 // EntityEffect applies a status effect to an entity for a given duration.
 //
 // This is a Minecraft packet
-// ID: 0x4B
+// ID: 0x4F
 type EntityEffect struct {
 	EntityID      VarInt
 	EffectID      int8

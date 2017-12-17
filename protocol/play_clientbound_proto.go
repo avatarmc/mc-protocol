@@ -1680,15 +1680,26 @@ func (c *ChangeGameState) read(rr io.Reader) (err error) {
 
 func (k *KeepAliveClientbound) id() int { return 0x1F }
 func (k *KeepAliveClientbound) write(ww io.Writer) (err error) {
-	if err = WriteVarInt(ww, k.ID); err != nil {
+	var tmp [8]byte
+	tmp[0] = byte(k.ID >> 56)
+	tmp[1] = byte(k.ID >> 48)
+	tmp[2] = byte(k.ID >> 40)
+	tmp[3] = byte(k.ID >> 32)
+	tmp[4] = byte(k.ID >> 24)
+	tmp[5] = byte(k.ID >> 16)
+	tmp[6] = byte(k.ID >> 8)
+	tmp[7] = byte(k.ID >> 0)
+	if _, err = ww.Write(tmp[:8]); err != nil {
 		return
 	}
 	return
 }
 func (k *KeepAliveClientbound) read(rr io.Reader) (err error) {
-	if k.ID, err = ReadVarInt(rr); err != nil {
+	var tmp [8]byte
+	if _, err = rr.Read(tmp[:8]); err != nil {
 		return
 	}
+	k.ID = int64((uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56))
 	return
 }
 
@@ -2177,7 +2188,21 @@ func (m *Maps) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityMove) id() int { return 0x25 }
+func (e *Entity) id() int { return 0x25 }
+func (e *Entity) write(ww io.Writer) (err error) {
+	if err = WriteVarInt(ww, e.EntityID); err != nil {
+		return
+	}
+	return
+}
+func (e *Entity) read(rr io.Reader) (err error) {
+	if e.EntityID, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	return
+}
+
+func (e *EntityMove) id() int { return 0x26 }
 func (e *EntityMove) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2226,7 +2251,7 @@ func (e *EntityMove) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityLookAndMove) id() int { return 0x26 }
+func (e *EntityLookAndMove) id() int { return 0x27 }
 func (e *EntityLookAndMove) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2291,7 +2316,7 @@ func (e *EntityLookAndMove) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityLook) id() int { return 0x27 }
+func (e *EntityLook) id() int { return 0x28 }
 func (e *EntityLook) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2324,20 +2349,6 @@ func (e *EntityLook) read(rr io.Reader) (err error) {
 	}
 	e.Pitch = int8((uint8(tmp[0]) << 0))
 	if e.OnGround, err = ReadBool(rr); err != nil {
-		return
-	}
-	return
-}
-
-func (e *Entity) id() int { return 0x28 }
-func (e *Entity) write(ww io.Writer) (err error) {
-	if err = WriteVarInt(ww, e.EntityID); err != nil {
-		return
-	}
-	return
-}
-func (e *Entity) read(rr io.Reader) (err error) {
-	if e.EntityID, err = ReadVarInt(rr); err != nil {
 		return
 	}
 	return
@@ -2460,7 +2471,31 @@ func (s *SignEditorOpen) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerAbilities) id() int { return 0x2B }
+func (c *CraftRecipeResponse) id() int { return 0x2B }
+func (c *CraftRecipeResponse) write(ww io.Writer) (err error) {
+	var tmp [1]byte
+	tmp[0] = byte(c.WindowID >> 0)
+	if _, err = ww.Write(tmp[:1]); err != nil {
+		return
+	}
+	if err = WriteVarInt(ww, c.Recipe); err != nil {
+		return
+	}
+	return
+}
+func (c *CraftRecipeResponse) read(rr io.Reader) (err error) {
+	var tmp [1]byte
+	if _, err = rr.Read(tmp[:1]); err != nil {
+		return
+	}
+	c.WindowID = (byte(tmp[0]) << 0)
+	if c.Recipe, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	return
+}
+
+func (p *PlayerAbilities) id() int { return 0x2C }
 func (p *PlayerAbilities) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp[0] = byte(p.Flags >> 0)
@@ -2506,7 +2541,7 @@ func (p *PlayerAbilities) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *CombatEvent) id() int { return 0x2C }
+func (c *CombatEvent) id() int { return 0x2D }
 func (c *CombatEvent) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	if err = WriteVarInt(ww, c.Event); err != nil {
@@ -2576,7 +2611,7 @@ func (c *CombatEvent) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerInfo) id() int { return 0x2D }
+func (p *PlayerInfo) id() int { return 0x2E }
 func (p *PlayerInfo) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, p.Action); err != nil {
 		return
@@ -2719,7 +2754,7 @@ func (p *PlayerInfo) read(rr io.Reader) (err error) {
 	return
 }
 
-func (t *TeleportPlayer) id() int { return 0x2E }
+func (t *TeleportPlayer) id() int { return 0x2F }
 func (t *TeleportPlayer) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp0 := math.Float64bits(t.X)
@@ -2825,7 +2860,7 @@ func (t *TeleportPlayer) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityUsedBed) id() int { return 0x2F }
+func (e *EntityUsedBed) id() int { return 0x30 }
 func (e *EntityUsedBed) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2856,7 +2891,81 @@ func (e *EntityUsedBed) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityDestroy) id() int { return 0x30 }
+func (u *UnlockRecipes) id() int { return 0x31 }
+func (u *UnlockRecipes) write(ww io.Writer) (err error) {
+	if err = WriteVarInt(ww, u.Action); err != nil {
+		return
+	}
+	if err = WriteBool(ww, u.CraftingBookOpen); err != nil {
+		return
+	}
+	if err = WriteBool(ww, u.FilteringCraftable); err != nil {
+		return
+	}
+	if err = WriteVarInt(ww, VarInt(len(u.RecipeIDs))); err != nil {
+		return
+	}
+	for tmp0 := range u.RecipeIDs {
+		if err = WriteVarInt(ww, u.RecipeIDs[tmp0]); err != nil {
+			return
+		}
+	}
+	if err = WriteVarInt(ww, VarInt(len(u.RecipeIDs2))); err != nil {
+		return
+	}
+	for tmp1 := range u.RecipeIDs2 {
+		if err = WriteVarInt(ww, u.RecipeIDs2[tmp1]); err != nil {
+			return
+		}
+	}
+	return
+}
+func (u *UnlockRecipes) read(rr io.Reader) (err error) {
+	if u.Action, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if u.CraftingBookOpen, err = ReadBool(rr); err != nil {
+		return
+	}
+	if u.FilteringCraftable, err = ReadBool(rr); err != nil {
+		return
+	}
+	var tmp0 VarInt
+	if tmp0, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if tmp0 > math.MaxInt16 {
+		return fmt.Errorf("array larger than max value: %d > %d", tmp0, math.MaxInt16)
+	}
+	if tmp0 < 0 {
+		return fmt.Errorf("negative array size: %d < 0", tmp0)
+	}
+	u.RecipeIDs = make([]VarInt, tmp0)
+	for tmp1 := range u.RecipeIDs {
+		if u.RecipeIDs[tmp1], err = ReadVarInt(rr); err != nil {
+			return
+		}
+	}
+	var tmp2 VarInt
+	if tmp2, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if tmp2 > math.MaxInt16 {
+		return fmt.Errorf("array larger than max value: %d > %d", tmp2, math.MaxInt16)
+	}
+	if tmp2 < 0 {
+		return fmt.Errorf("negative array size: %d < 0", tmp2)
+	}
+	u.RecipeIDs2 = make([]VarInt, tmp2)
+	for tmp3 := range u.RecipeIDs2 {
+		if u.RecipeIDs2[tmp3], err = ReadVarInt(rr); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (e *EntityDestroy) id() int { return 0x32 }
 func (e *EntityDestroy) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, VarInt(len(e.EntityIDs))); err != nil {
 		return
@@ -2888,7 +2997,7 @@ func (e *EntityDestroy) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityRemoveEffect) id() int { return 0x31 }
+func (e *EntityRemoveEffect) id() int { return 0x33 }
 func (e *EntityRemoveEffect) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2912,7 +3021,7 @@ func (e *EntityRemoveEffect) read(rr io.Reader) (err error) {
 	return
 }
 
-func (r *ResourcePackSend) id() int { return 0x32 }
+func (r *ResourcePackSend) id() int { return 0x34 }
 func (r *ResourcePackSend) write(ww io.Writer) (err error) {
 	if err = WriteString(ww, r.URL); err != nil {
 		return
@@ -2932,7 +3041,7 @@ func (r *ResourcePackSend) read(rr io.Reader) (err error) {
 	return
 }
 
-func (r *Respawn) id() int { return 0x33 }
+func (r *Respawn) id() int { return 0x35 }
 func (r *Respawn) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp[0] = byte(r.Dimension >> 24)
@@ -2975,7 +3084,7 @@ func (r *Respawn) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityHeadLook) id() int { return 0x34 }
+func (e *EntityHeadLook) id() int { return 0x36 }
 func (e *EntityHeadLook) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -2999,7 +3108,27 @@ func (e *EntityHeadLook) read(rr io.Reader) (err error) {
 	return
 }
 
-func (w *WorldBorder) id() int { return 0x35 }
+func (s *SelectAdvancementTab) id() int { return 0x37 }
+func (s *SelectAdvancementTab) write(ww io.Writer) (err error) {
+	if err = WriteBool(ww, s.HasID); err != nil {
+		return
+	}
+	if err = WriteString(ww, s.Tab); err != nil {
+		return
+	}
+	return
+}
+func (s *SelectAdvancementTab) read(rr io.Reader) (err error) {
+	if s.HasID, err = ReadBool(rr); err != nil {
+		return
+	}
+	if s.Tab, err = ReadString(rr); err != nil {
+		return
+	}
+	return
+}
+
+func (w *WorldBorder) id() int { return 0x38 }
 func (w *WorldBorder) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	if err = WriteVarInt(ww, w.Action); err != nil {
@@ -3139,7 +3268,7 @@ func (w *WorldBorder) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *Camera) id() int { return 0x36 }
+func (c *Camera) id() int { return 0x39 }
 func (c *Camera) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, c.TargetID); err != nil {
 		return
@@ -3153,7 +3282,7 @@ func (c *Camera) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SetCurrentHotbarSlot) id() int { return 0x37 }
+func (s *SetCurrentHotbarSlot) id() int { return 0x3A }
 func (s *SetCurrentHotbarSlot) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	tmp[0] = byte(s.Slot >> 0)
@@ -3171,7 +3300,7 @@ func (s *SetCurrentHotbarSlot) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *ScoreboardDisplay) id() int { return 0x38 }
+func (s *ScoreboardDisplay) id() int { return 0x3B }
 func (s *ScoreboardDisplay) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	tmp[0] = byte(s.Position >> 0)
@@ -3195,7 +3324,7 @@ func (s *ScoreboardDisplay) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityMetadata) id() int { return 0x39 }
+func (e *EntityMetadata) id() int { return 0x3C }
 func (e *EntityMetadata) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
 		return
@@ -3215,7 +3344,7 @@ func (e *EntityMetadata) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityAttach) id() int { return 0x3A }
+func (e *EntityAttach) id() int { return 0x3D }
 func (e *EntityAttach) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp[0] = byte(e.EntityID >> 24)
@@ -3232,9 +3361,6 @@ func (e *EntityAttach) write(ww io.Writer) (err error) {
 	if _, err = ww.Write(tmp[:4]); err != nil {
 		return
 	}
-	if err = WriteBool(ww, e.Leash); err != nil {
-		return
-	}
 	return
 }
 func (e *EntityAttach) read(rr io.Reader) (err error) {
@@ -3247,13 +3373,10 @@ func (e *EntityAttach) read(rr io.Reader) (err error) {
 		return
 	}
 	e.Vehicle = int32((uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24))
-	if e.Leash, err = ReadBool(rr); err != nil {
-		return
-	}
 	return
 }
 
-func (e *EntityVelocity) id() int { return 0x3B }
+func (e *EntityVelocity) id() int { return 0x3E }
 func (e *EntityVelocity) write(ww io.Writer) (err error) {
 	var tmp [2]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -3296,7 +3419,7 @@ func (e *EntityVelocity) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityEquipment) id() int { return 0x3C }
+func (e *EntityEquipment) id() int { return 0x3F }
 func (e *EntityEquipment) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
 		return
@@ -3322,7 +3445,7 @@ func (e *EntityEquipment) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SetExperience) id() int { return 0x3D }
+func (s *SetExperience) id() int { return 0x40 }
 func (s *SetExperience) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp0 := math.Float32bits(s.ExperienceBar)
@@ -3358,7 +3481,7 @@ func (s *SetExperience) read(rr io.Reader) (err error) {
 	return
 }
 
-func (u *UpdateHealth) id() int { return 0x3E }
+func (u *UpdateHealth) id() int { return 0x41 }
 func (u *UpdateHealth) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	tmp0 := math.Float32bits(u.Health)
@@ -3402,7 +3525,7 @@ func (u *UpdateHealth) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *ScoreboardObjective) id() int { return 0x3F }
+func (s *ScoreboardObjective) id() int { return 0x42 }
 func (s *ScoreboardObjective) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteString(ww, s.Name); err != nil {
@@ -3442,7 +3565,7 @@ func (s *ScoreboardObjective) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SetPassengers) id() int { return 0x40 }
+func (s *SetPassengers) id() int { return 0x43 }
 func (s *SetPassengers) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, s.EntityID); err != nil {
 		return
@@ -3480,7 +3603,7 @@ func (s *SetPassengers) read(rr io.Reader) (err error) {
 	return
 }
 
-func (t *Teams) id() int { return 0x41 }
+func (t *Teams) id() int { return 0x44 }
 func (t *Teams) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteString(ww, t.Name); err != nil {
@@ -3582,7 +3705,7 @@ func (t *Teams) read(rr io.Reader) (err error) {
 	return
 }
 
-func (u *UpdateScore) id() int { return 0x42 }
+func (u *UpdateScore) id() int { return 0x45 }
 func (u *UpdateScore) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteString(ww, u.Name); err != nil {
@@ -3622,7 +3745,7 @@ func (u *UpdateScore) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SpawnPosition) id() int { return 0x43 }
+func (s *SpawnPosition) id() int { return 0x46 }
 func (s *SpawnPosition) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(s.Location >> 56)
@@ -3647,7 +3770,7 @@ func (s *SpawnPosition) read(rr io.Reader) (err error) {
 	return
 }
 
-func (t *TimeUpdate) id() int { return 0x44 }
+func (t *TimeUpdate) id() int { return 0x47 }
 func (t *TimeUpdate) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(t.WorldAge >> 56)
@@ -3687,7 +3810,7 @@ func (t *TimeUpdate) read(rr io.Reader) (err error) {
 	return
 }
 
-func (t *Title) id() int { return 0x45 }
+func (t *Title) id() int { return 0x48 }
 func (t *Title) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	if err = WriteVarInt(ww, t.Action); err != nil {
@@ -3714,6 +3837,16 @@ func (t *Title) write(ww io.Writer) (err error) {
 		}
 	}
 	if t.Action == 2 {
+		var tmp4 []byte
+		if tmp4, err = json.Marshal(&t.ActionBar); err != nil {
+			return
+		}
+		tmp5 := string(tmp4)
+		if err = WriteString(ww, tmp5); err != nil {
+			return
+		}
+	}
+	if t.Action == 3 {
 		tmp[0] = byte(t.FadeIn >> 24)
 		tmp[1] = byte(t.FadeIn >> 16)
 		tmp[2] = byte(t.FadeIn >> 8)
@@ -3762,6 +3895,15 @@ func (t *Title) read(rr io.Reader) (err error) {
 		}
 	}
 	if t.Action == 2 {
+		var tmp2 string
+		if tmp2, err = ReadString(rr); err != nil {
+			return err
+		}
+		if err = json.Unmarshal([]byte(tmp2), &t.ActionBar); err != nil {
+			return
+		}
+	}
+	if t.Action == 3 {
 		if _, err = rr.Read(tmp[:4]); err != nil {
 			return
 		}
@@ -3778,7 +3920,7 @@ func (t *Title) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *SoundEffect) id() int { return 0x46 }
+func (s *SoundEffect) id() int { return 0x49 }
 func (s *SoundEffect) write(ww io.Writer) (err error) {
 	var tmp [4]byte
 	if err = WriteVarInt(ww, s.SoundID); err != nil {
@@ -3861,7 +4003,7 @@ func (s *SoundEffect) read(rr io.Reader) (err error) {
 	return
 }
 
-func (p *PlayerListHeaderFooter) id() int { return 0x47 }
+func (p *PlayerListHeaderFooter) id() int { return 0x4A }
 func (p *PlayerListHeaderFooter) write(ww io.Writer) (err error) {
 	var tmp0 []byte
 	if tmp0, err = json.Marshal(&p.Header); err != nil {
@@ -3899,12 +4041,15 @@ func (p *PlayerListHeaderFooter) read(rr io.Reader) (err error) {
 	return
 }
 
-func (c *CollectItem) id() int { return 0x48 }
+func (c *CollectItem) id() int { return 0x4B }
 func (c *CollectItem) write(ww io.Writer) (err error) {
 	if err = WriteVarInt(ww, c.CollectedEntityID); err != nil {
 		return
 	}
 	if err = WriteVarInt(ww, c.CollectorEntityID); err != nil {
+		return
+	}
+	if err = WriteVarInt(ww, c.Count); err != nil {
 		return
 	}
 	return
@@ -3916,10 +4061,13 @@ func (c *CollectItem) read(rr io.Reader) (err error) {
 	if c.CollectorEntityID, err = ReadVarInt(rr); err != nil {
 		return
 	}
+	if c.Count, err = ReadVarInt(rr); err != nil {
+		return
+	}
 	return
 }
 
-func (e *EntityTeleport) id() int { return 0x49 }
+func (e *EntityTeleport) id() int { return 0x4C }
 func (e *EntityTeleport) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -4011,7 +4159,327 @@ func (e *EntityTeleport) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityProperties) id() int { return 0x4A }
+func (a *Advancements) id() int { return 0x4D }
+func (a *Advancements) write(ww io.Writer) (err error) {
+	var tmp [8]byte
+	if err = WriteBool(ww, a.Reset); err != nil {
+		return
+	}
+	if err = WriteVarInt(ww, VarInt(len(a.Advancements))); err != nil {
+		return
+	}
+	for tmp0 := range a.Advancements {
+		if err = WriteString(ww, a.Advancements[tmp0].Key); err != nil {
+			return
+		}
+		if err = WriteBool(ww, a.Advancements[tmp0].HasParent); err != nil {
+			return
+		}
+		if a.Advancements[tmp0].HasParent == true {
+			if err = WriteString(ww, a.Advancements[tmp0].Parent); err != nil {
+				return
+			}
+		}
+		if err = WriteBool(ww, a.Advancements[tmp0].HasDisplay); err != nil {
+			return
+		}
+		if a.Advancements[tmp0].HasDisplay == true {
+			var tmp1 []byte
+			if tmp1, err = json.Marshal(&a.Advancements[tmp0].Display.Title); err != nil {
+				return
+			}
+			tmp2 := string(tmp1)
+			if err = WriteString(ww, tmp2); err != nil {
+				return
+			}
+			var tmp3 []byte
+			if tmp3, err = json.Marshal(&a.Advancements[tmp0].Display.Description); err != nil {
+				return
+			}
+			tmp4 := string(tmp3)
+			if err = WriteString(ww, tmp4); err != nil {
+				return
+			}
+			if err = a.Advancements[tmp0].Display.Item.Serialize(ww); err != nil {
+				return
+			}
+			if err = WriteVarInt(ww, a.Advancements[tmp0].Display.FrameType); err != nil {
+				return
+			}
+			tmp[0] = byte(a.Advancements[tmp0].Display.Flags >> 24)
+			tmp[1] = byte(a.Advancements[tmp0].Display.Flags >> 16)
+			tmp[2] = byte(a.Advancements[tmp0].Display.Flags >> 8)
+			tmp[3] = byte(a.Advancements[tmp0].Display.Flags >> 0)
+			if _, err = ww.Write(tmp[:4]); err != nil {
+				return
+			}
+			if a.Advancements[tmp0].Display.Flags&1 == 1 {
+				if err = WriteString(ww, a.Advancements[tmp0].Display.BackgroundTexture); err != nil {
+					return
+				}
+			}
+			tmp5 := math.Float32bits(a.Advancements[tmp0].Display.X)
+			tmp[0] = byte(tmp5 >> 24)
+			tmp[1] = byte(tmp5 >> 16)
+			tmp[2] = byte(tmp5 >> 8)
+			tmp[3] = byte(tmp5 >> 0)
+			if _, err = ww.Write(tmp[:4]); err != nil {
+				return
+			}
+			tmp6 := math.Float32bits(a.Advancements[tmp0].Display.Y)
+			tmp[0] = byte(tmp6 >> 24)
+			tmp[1] = byte(tmp6 >> 16)
+			tmp[2] = byte(tmp6 >> 8)
+			tmp[3] = byte(tmp6 >> 0)
+			if _, err = ww.Write(tmp[:4]); err != nil {
+				return
+			}
+		}
+		if err = WriteVarInt(ww, VarInt(len(a.Advancements[tmp0].Criteria))); err != nil {
+			return
+		}
+		for tmp7 := range a.Advancements[tmp0].Criteria {
+			if err = WriteString(ww, a.Advancements[tmp0].Criteria[tmp7]); err != nil {
+				return
+			}
+		}
+		if err = WriteVarInt(ww, VarInt(len(a.Advancements[tmp0].Requirements))); err != nil {
+			return
+		}
+		for tmp8 := range a.Advancements[tmp0].Requirements {
+			if err = WriteVarInt(ww, VarInt(len(a.Advancements[tmp0].Requirements[tmp8].Criteria))); err != nil {
+				return
+			}
+			for tmp9 := range a.Advancements[tmp0].Requirements[tmp8].Criteria {
+				if err = WriteString(ww, a.Advancements[tmp0].Requirements[tmp8].Criteria[tmp9]); err != nil {
+					return
+				}
+			}
+		}
+	}
+	if err = WriteVarInt(ww, VarInt(len(a.Remove))); err != nil {
+		return
+	}
+	for tmp10 := range a.Remove {
+		if err = WriteString(ww, a.Remove[tmp10]); err != nil {
+			return
+		}
+	}
+	if err = WriteVarInt(ww, VarInt(len(a.Progress))); err != nil {
+		return
+	}
+	for tmp11 := range a.Progress {
+		if err = WriteString(ww, a.Progress[tmp11].Key); err != nil {
+			return
+		}
+		if err = WriteVarInt(ww, VarInt(len(a.Progress[tmp11].Criteria))); err != nil {
+			return
+		}
+		for tmp12 := range a.Progress[tmp11].Criteria {
+			if err = WriteString(ww, a.Progress[tmp11].Criteria[tmp12].Key); err != nil {
+				return
+			}
+			if err = WriteBool(ww, a.Progress[tmp11].Criteria[tmp12].Achieved); err != nil {
+				return
+			}
+			if a.Progress[tmp11].Criteria[tmp12].Achieved == true {
+				tmp[0] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 56)
+				tmp[1] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 48)
+				tmp[2] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 40)
+				tmp[3] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 32)
+				tmp[4] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 24)
+				tmp[5] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 16)
+				tmp[6] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 8)
+				tmp[7] = byte(a.Progress[tmp11].Criteria[tmp12].AchievedTime >> 0)
+				if _, err = ww.Write(tmp[:8]); err != nil {
+					return
+				}
+			}
+		}
+	}
+	return
+}
+func (a *Advancements) read(rr io.Reader) (err error) {
+	var tmp [8]byte
+	if a.Reset, err = ReadBool(rr); err != nil {
+		return
+	}
+	var tmp0 VarInt
+	if tmp0, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if tmp0 > math.MaxInt16 {
+		return fmt.Errorf("array larger than max value: %d > %d", tmp0, math.MaxInt16)
+	}
+	if tmp0 < 0 {
+		return fmt.Errorf("negative array size: %d < 0", tmp0)
+	}
+	a.Advancements = make([]Advancement, tmp0)
+	for tmp1 := range a.Advancements {
+		if a.Advancements[tmp1].Key, err = ReadString(rr); err != nil {
+			return
+		}
+		if a.Advancements[tmp1].HasParent, err = ReadBool(rr); err != nil {
+			return
+		}
+		if a.Advancements[tmp1].HasParent == true {
+			if a.Advancements[tmp1].Parent, err = ReadString(rr); err != nil {
+				return
+			}
+		}
+		if a.Advancements[tmp1].HasDisplay, err = ReadBool(rr); err != nil {
+			return
+		}
+		if a.Advancements[tmp1].HasDisplay == true {
+			var tmp2 string
+			if tmp2, err = ReadString(rr); err != nil {
+				return err
+			}
+			if err = json.Unmarshal([]byte(tmp2), &a.Advancements[tmp1].Display.Title); err != nil {
+				return
+			}
+			var tmp3 string
+			if tmp3, err = ReadString(rr); err != nil {
+				return err
+			}
+			if err = json.Unmarshal([]byte(tmp3), &a.Advancements[tmp1].Display.Description); err != nil {
+				return
+			}
+			if err = a.Advancements[tmp1].Display.Item.Deserialize(rr); err != nil {
+				return
+			}
+			if a.Advancements[tmp1].Display.FrameType, err = ReadVarInt(rr); err != nil {
+				return
+			}
+			if _, err = rr.Read(tmp[:4]); err != nil {
+				return
+			}
+			a.Advancements[tmp1].Display.Flags = int32((uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24))
+			if a.Advancements[tmp1].Display.Flags&1 == 1 {
+				if a.Advancements[tmp1].Display.BackgroundTexture, err = ReadString(rr); err != nil {
+					return
+				}
+			}
+			var tmp4 uint32
+			if _, err = rr.Read(tmp[:4]); err != nil {
+				return
+			}
+			tmp4 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+			a.Advancements[tmp1].Display.X = math.Float32frombits(tmp4)
+			var tmp5 uint32
+			if _, err = rr.Read(tmp[:4]); err != nil {
+				return
+			}
+			tmp5 = (uint32(tmp[3]) << 0) | (uint32(tmp[2]) << 8) | (uint32(tmp[1]) << 16) | (uint32(tmp[0]) << 24)
+			a.Advancements[tmp1].Display.Y = math.Float32frombits(tmp5)
+		}
+		var tmp6 VarInt
+		if tmp6, err = ReadVarInt(rr); err != nil {
+			return
+		}
+		if tmp6 > math.MaxInt16 {
+			return fmt.Errorf("array larger than max value: %d > %d", tmp6, math.MaxInt16)
+		}
+		if tmp6 < 0 {
+			return fmt.Errorf("negative array size: %d < 0", tmp6)
+		}
+		a.Advancements[tmp1].Criteria = make([]string, tmp6)
+		for tmp7 := range a.Advancements[tmp1].Criteria {
+			if a.Advancements[tmp1].Criteria[tmp7], err = ReadString(rr); err != nil {
+				return
+			}
+		}
+		var tmp8 VarInt
+		if tmp8, err = ReadVarInt(rr); err != nil {
+			return
+		}
+		if tmp8 > math.MaxInt16 {
+			return fmt.Errorf("array larger than max value: %d > %d", tmp8, math.MaxInt16)
+		}
+		if tmp8 < 0 {
+			return fmt.Errorf("negative array size: %d < 0", tmp8)
+		}
+		a.Advancements[tmp1].Requirements = make([]Requirement, tmp8)
+		for tmp9 := range a.Advancements[tmp1].Requirements {
+			var tmp10 VarInt
+			if tmp10, err = ReadVarInt(rr); err != nil {
+				return
+			}
+			if tmp10 > math.MaxInt16 {
+				return fmt.Errorf("array larger than max value: %d > %d", tmp10, math.MaxInt16)
+			}
+			if tmp10 < 0 {
+				return fmt.Errorf("negative array size: %d < 0", tmp10)
+			}
+			a.Advancements[tmp1].Requirements[tmp9].Criteria = make([]string, tmp10)
+			for tmp11 := range a.Advancements[tmp1].Requirements[tmp9].Criteria {
+				if a.Advancements[tmp1].Requirements[tmp9].Criteria[tmp11], err = ReadString(rr); err != nil {
+					return
+				}
+			}
+		}
+	}
+	var tmp12 VarInt
+	if tmp12, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if tmp12 > math.MaxInt16 {
+		return fmt.Errorf("array larger than max value: %d > %d", tmp12, math.MaxInt16)
+	}
+	if tmp12 < 0 {
+		return fmt.Errorf("negative array size: %d < 0", tmp12)
+	}
+	a.Remove = make([]string, tmp12)
+	for tmp13 := range a.Remove {
+		if a.Remove[tmp13], err = ReadString(rr); err != nil {
+			return
+		}
+	}
+	var tmp14 VarInt
+	if tmp14, err = ReadVarInt(rr); err != nil {
+		return
+	}
+	if tmp14 > math.MaxInt16 {
+		return fmt.Errorf("array larger than max value: %d > %d", tmp14, math.MaxInt16)
+	}
+	if tmp14 < 0 {
+		return fmt.Errorf("negative array size: %d < 0", tmp14)
+	}
+	a.Progress = make([]Progress, tmp14)
+	for tmp15 := range a.Progress {
+		if a.Progress[tmp15].Key, err = ReadString(rr); err != nil {
+			return
+		}
+		var tmp16 VarInt
+		if tmp16, err = ReadVarInt(rr); err != nil {
+			return
+		}
+		if tmp16 > math.MaxInt16 {
+			return fmt.Errorf("array larger than max value: %d > %d", tmp16, math.MaxInt16)
+		}
+		if tmp16 < 0 {
+			return fmt.Errorf("negative array size: %d < 0", tmp16)
+		}
+		a.Progress[tmp15].Criteria = make([]CriterionProgress, tmp16)
+		for tmp17 := range a.Progress[tmp15].Criteria {
+			if a.Progress[tmp15].Criteria[tmp17].Key, err = ReadString(rr); err != nil {
+				return
+			}
+			if a.Progress[tmp15].Criteria[tmp17].Achieved, err = ReadBool(rr); err != nil {
+				return
+			}
+			if a.Progress[tmp15].Criteria[tmp17].Achieved == true {
+				if _, err = rr.Read(tmp[:8]); err != nil {
+					return
+				}
+				a.Progress[tmp15].Criteria[tmp17].AchievedTime = int64((uint64(tmp[7]) << 0) | (uint64(tmp[6]) << 8) | (uint64(tmp[5]) << 16) | (uint64(tmp[4]) << 24) | (uint64(tmp[3]) << 32) | (uint64(tmp[2]) << 40) | (uint64(tmp[1]) << 48) | (uint64(tmp[0]) << 56))
+			}
+		}
+	}
+	return
+}
+
+func (e *EntityProperties) id() int { return 0x4E }
 func (e *EntityProperties) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -4124,7 +4592,7 @@ func (e *EntityProperties) read(rr io.Reader) (err error) {
 	return
 }
 
-func (e *EntityEffect) id() int { return 0x4B }
+func (e *EntityEffect) id() int { return 0x4F }
 func (e *EntityEffect) write(ww io.Writer) (err error) {
 	var tmp [1]byte
 	if err = WriteVarInt(ww, e.EntityID); err != nil {
@@ -4206,43 +4674,47 @@ func init() {
 	packetCreator[Play][clientbound][0x22] = func() Packet { return &Particle{} }
 	packetCreator[Play][clientbound][0x23] = func() Packet { return &JoinGame{} }
 	packetCreator[Play][clientbound][0x24] = func() Packet { return &Maps{} }
-	packetCreator[Play][clientbound][0x25] = func() Packet { return &EntityMove{} }
-	packetCreator[Play][clientbound][0x26] = func() Packet { return &EntityLookAndMove{} }
-	packetCreator[Play][clientbound][0x27] = func() Packet { return &EntityLook{} }
-	packetCreator[Play][clientbound][0x28] = func() Packet { return &Entity{} }
+	packetCreator[Play][clientbound][0x25] = func() Packet { return &Entity{} }
+	packetCreator[Play][clientbound][0x26] = func() Packet { return &EntityMove{} }
+	packetCreator[Play][clientbound][0x27] = func() Packet { return &EntityLookAndMove{} }
+	packetCreator[Play][clientbound][0x28] = func() Packet { return &EntityLook{} }
 	packetCreator[Play][clientbound][0x29] = func() Packet { return &VebicleMoveClientbound{} }
 	packetCreator[Play][clientbound][0x2A] = func() Packet { return &SignEditorOpen{} }
-	packetCreator[Play][clientbound][0x2B] = func() Packet { return &PlayerAbilities{} }
-	packetCreator[Play][clientbound][0x2C] = func() Packet { return &CombatEvent{} }
-	packetCreator[Play][clientbound][0x2D] = func() Packet { return &PlayerInfo{} }
-	packetCreator[Play][clientbound][0x2E] = func() Packet { return &TeleportPlayer{} }
-	packetCreator[Play][clientbound][0x2F] = func() Packet { return &EntityUsedBed{} }
-	packetCreator[Play][clientbound][0x30] = func() Packet { return &EntityDestroy{} }
-	packetCreator[Play][clientbound][0x31] = func() Packet { return &EntityRemoveEffect{} }
-	packetCreator[Play][clientbound][0x32] = func() Packet { return &ResourcePackSend{} }
-	packetCreator[Play][clientbound][0x33] = func() Packet { return &Respawn{} }
-	packetCreator[Play][clientbound][0x34] = func() Packet { return &EntityHeadLook{} }
-	packetCreator[Play][clientbound][0x35] = func() Packet { return &WorldBorder{} }
-	packetCreator[Play][clientbound][0x36] = func() Packet { return &Camera{} }
-	packetCreator[Play][clientbound][0x37] = func() Packet { return &SetCurrentHotbarSlot{} }
-	packetCreator[Play][clientbound][0x38] = func() Packet { return &ScoreboardDisplay{} }
-	packetCreator[Play][clientbound][0x39] = func() Packet { return &EntityMetadata{} }
-	packetCreator[Play][clientbound][0x3A] = func() Packet { return &EntityAttach{} }
-	packetCreator[Play][clientbound][0x3B] = func() Packet { return &EntityVelocity{} }
-	packetCreator[Play][clientbound][0x3C] = func() Packet { return &EntityEquipment{} }
-	packetCreator[Play][clientbound][0x3D] = func() Packet { return &SetExperience{} }
-	packetCreator[Play][clientbound][0x3E] = func() Packet { return &UpdateHealth{} }
-	packetCreator[Play][clientbound][0x3F] = func() Packet { return &ScoreboardObjective{} }
-	packetCreator[Play][clientbound][0x40] = func() Packet { return &SetPassengers{} }
-	packetCreator[Play][clientbound][0x41] = func() Packet { return &Teams{} }
-	packetCreator[Play][clientbound][0x42] = func() Packet { return &UpdateScore{} }
-	packetCreator[Play][clientbound][0x43] = func() Packet { return &SpawnPosition{} }
-	packetCreator[Play][clientbound][0x44] = func() Packet { return &TimeUpdate{} }
-	packetCreator[Play][clientbound][0x45] = func() Packet { return &Title{} }
-	packetCreator[Play][clientbound][0x46] = func() Packet { return &SoundEffect{} }
-	packetCreator[Play][clientbound][0x47] = func() Packet { return &PlayerListHeaderFooter{} }
-	packetCreator[Play][clientbound][0x48] = func() Packet { return &CollectItem{} }
-	packetCreator[Play][clientbound][0x49] = func() Packet { return &EntityTeleport{} }
-	packetCreator[Play][clientbound][0x4A] = func() Packet { return &EntityProperties{} }
-	packetCreator[Play][clientbound][0x4B] = func() Packet { return &EntityEffect{} }
+	packetCreator[Play][clientbound][0x2B] = func() Packet { return &CraftRecipeResponse{} }
+	packetCreator[Play][clientbound][0x2C] = func() Packet { return &PlayerAbilities{} }
+	packetCreator[Play][clientbound][0x2D] = func() Packet { return &CombatEvent{} }
+	packetCreator[Play][clientbound][0x2E] = func() Packet { return &PlayerInfo{} }
+	packetCreator[Play][clientbound][0x2F] = func() Packet { return &TeleportPlayer{} }
+	packetCreator[Play][clientbound][0x30] = func() Packet { return &EntityUsedBed{} }
+	packetCreator[Play][clientbound][0x31] = func() Packet { return &UnlockRecipes{} }
+	packetCreator[Play][clientbound][0x32] = func() Packet { return &EntityDestroy{} }
+	packetCreator[Play][clientbound][0x33] = func() Packet { return &EntityRemoveEffect{} }
+	packetCreator[Play][clientbound][0x34] = func() Packet { return &ResourcePackSend{} }
+	packetCreator[Play][clientbound][0x35] = func() Packet { return &Respawn{} }
+	packetCreator[Play][clientbound][0x36] = func() Packet { return &EntityHeadLook{} }
+	packetCreator[Play][clientbound][0x37] = func() Packet { return &SelectAdvancementTab{} }
+	packetCreator[Play][clientbound][0x38] = func() Packet { return &WorldBorder{} }
+	packetCreator[Play][clientbound][0x39] = func() Packet { return &Camera{} }
+	packetCreator[Play][clientbound][0x3A] = func() Packet { return &SetCurrentHotbarSlot{} }
+	packetCreator[Play][clientbound][0x3B] = func() Packet { return &ScoreboardDisplay{} }
+	packetCreator[Play][clientbound][0x3C] = func() Packet { return &EntityMetadata{} }
+	packetCreator[Play][clientbound][0x3D] = func() Packet { return &EntityAttach{} }
+	packetCreator[Play][clientbound][0x3E] = func() Packet { return &EntityVelocity{} }
+	packetCreator[Play][clientbound][0x3F] = func() Packet { return &EntityEquipment{} }
+	packetCreator[Play][clientbound][0x40] = func() Packet { return &SetExperience{} }
+	packetCreator[Play][clientbound][0x41] = func() Packet { return &UpdateHealth{} }
+	packetCreator[Play][clientbound][0x42] = func() Packet { return &ScoreboardObjective{} }
+	packetCreator[Play][clientbound][0x43] = func() Packet { return &SetPassengers{} }
+	packetCreator[Play][clientbound][0x44] = func() Packet { return &Teams{} }
+	packetCreator[Play][clientbound][0x45] = func() Packet { return &UpdateScore{} }
+	packetCreator[Play][clientbound][0x46] = func() Packet { return &SpawnPosition{} }
+	packetCreator[Play][clientbound][0x47] = func() Packet { return &TimeUpdate{} }
+	packetCreator[Play][clientbound][0x48] = func() Packet { return &Title{} }
+	packetCreator[Play][clientbound][0x49] = func() Packet { return &SoundEffect{} }
+	packetCreator[Play][clientbound][0x4A] = func() Packet { return &PlayerListHeaderFooter{} }
+	packetCreator[Play][clientbound][0x4B] = func() Packet { return &CollectItem{} }
+	packetCreator[Play][clientbound][0x4C] = func() Packet { return &EntityTeleport{} }
+	packetCreator[Play][clientbound][0x4D] = func() Packet { return &Advancements{} }
+	packetCreator[Play][clientbound][0x4E] = func() Packet { return &EntityProperties{} }
+	packetCreator[Play][clientbound][0x4F] = func() Packet { return &EntityEffect{} }
 }

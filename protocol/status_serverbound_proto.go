@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func (s *StatusRequest) id() int { return 0 }
+func (s *StatusRequest) id() int { return 0x00 }
 func (s *StatusRequest) write(ww io.Writer) (err error) {
 	return
 }
@@ -15,7 +15,7 @@ func (s *StatusRequest) read(rr io.Reader) (err error) {
 	return
 }
 
-func (s *StatusPing) id() int { return 1 }
+func (s *StatusPing) id() int { return 0x01 }
 func (s *StatusPing) write(ww io.Writer) (err error) {
 	var tmp [8]byte
 	tmp[0] = byte(s.Time >> 56)
@@ -41,6 +41,6 @@ func (s *StatusPing) read(rr io.Reader) (err error) {
 }
 
 func init() {
-	packetCreator[Status][serverbound][0] = func() Packet { return &StatusRequest{} }
-	packetCreator[Status][serverbound][1] = func() Packet { return &StatusPing{} }
+	packetCreator[Status][serverbound][0x00] = func() Packet { return &StatusRequest{} }
+	packetCreator[Status][serverbound][0x01] = func() Packet { return &StatusPing{} }
 }

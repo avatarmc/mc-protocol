@@ -12,16 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate protocol_builder $GOFILE Play serverbound
+//go:generate protocol-builder $GOFILE Play serverbound
 
 package protocol
+
+// This is a Minecraft packet
+// ID: 0x00
+type TeleportConfirm struct {
+	TeleportID VarInt
+}
 
 // TabComplete is sent by the client when the client presses tab in
 // the chat box.
 //
 // This is a Minecraft packet
+// ID: 0x01
 type TabComplete struct {
 	Text      string
+	AssumeComman bool
 	HasTarget bool
 	Target    Position `if:".HasTarget==true"`
 }
@@ -30,6 +38,7 @@ type TabComplete struct {
 // executes a command (prefixed by '/').
 //
 // This is a Minecraft packet
+// ID: 0x02
 type ChatMessage struct {
 	Message string
 }
@@ -37,6 +46,7 @@ type ChatMessage struct {
 // ClientStatus is sent to update the client's status
 //
 // This is a Minecraft packet
+// ID: 0x03
 type ClientStatus struct {
 	ActionID VarInt
 }
@@ -44,6 +54,7 @@ type ClientStatus struct {
 // ClientSettings is sent by the client to update its current settings.
 //
 // This is a Minecraft packet
+// ID: 0x04
 type ClientSettings struct {
 	Locale             string
 	ViewDistance       byte
@@ -56,6 +67,7 @@ type ClientSettings struct {
 // ConfirmTransactionServerbound is a reply to ConfirmTransaction.
 //
 // This is a Minecraft packet
+// ID: 0x05
 type ConfirmTransactionServerbound struct {
 	ID           byte
 	ActionNumber int16
@@ -65,6 +77,7 @@ type ConfirmTransactionServerbound struct {
 // EnchantItem is sent when the client enchants an item.
 //
 // This is a Minecraft packet
+// ID: 0x06
 type EnchantItem struct {
 	ID          byte
 	Enchantment byte
@@ -73,6 +86,7 @@ type EnchantItem struct {
 // ClickWindow is sent when the client clicks in a window.
 //
 // This is a Minecraft packet
+// ID: 0x07
 type ClickWindow struct {
 	ID           byte
 	Slot         int16
@@ -85,6 +99,7 @@ type ClickWindow struct {
 // CloseWindow is sent when the client closes a window.
 //
 // This is a Minecraft packet
+// ID: 0x08
 type CloseWindow struct {
 	ID byte
 }
@@ -94,6 +109,7 @@ type CloseWindow struct {
 // registered too.
 //
 // This is a Minecraft packet
+// ID: 0x09
 type PluginMessageServerbound struct {
 	Channel string
 	Data    []byte `length:"remaining"`
@@ -103,6 +119,7 @@ type PluginMessageServerbound struct {
 // (left clicks) an entity.
 //
 // This is a Minecraft packet
+// ID: 0x0A
 type UseEntity struct {
 	TargetID VarInt
 	Type     VarInt
@@ -117,13 +134,23 @@ type UseEntity struct {
 // may disconnect the client.
 //
 // This is a Minecraft packet
+// ID: 0x0B
 type KeepAliveServerbound struct {
-	ID VarInt
+	ID int64
+}
+
+// Player is used to update the player's on ground status.
+//
+// This is a Minecraft packet
+// ID: 0x0C
+type Player struct {
+	OnGround bool
 }
 
 // PlayerPosition is used to update the player's position.
 //
 // This is a Minecraft packet
+// ID: 0x0D
 type PlayerPosition struct {
 	X, Y, Z  float64
 	OnGround bool
@@ -133,6 +160,7 @@ type PlayerPosition struct {
 // PlayerLook.
 //
 // This is a Minecraft packet
+// ID: 0x0E
 type PlayerPositionLook struct {
 	X, Y, Z    float64
 	Yaw, Pitch float32
@@ -142,22 +170,44 @@ type PlayerPositionLook struct {
 // PlayerLook is used to update the player's rotation.
 //
 // This is a Minecraft packet
+// ID: 0x0F
 type PlayerLook struct {
 	Yaw, Pitch float32
 	OnGround   bool
 }
 
-// Player is used to update whether the player is on the ground or not.
+// PlayerVehicleMove is used to update the location of the player's vehicle.
 //
 // This is a Minecraft packet
-type Player struct {
-	OnGround bool
+// ID: 0x10
+type PlayerVehicleMove struct {
+	X, Y, Z    float64
+	Yaw, Pitch float32
+}
+
+// SteerBoat is used to update the status of the player's boat.
+//
+// This is a Minecraft packet
+// ID: 0x11
+type SteerBoat struct {
+	LeftPaddle, RightPaddle bool
+}
+
+// CraftRecipeRequest is used to craft items.
+//
+// This is a Minecraft packet
+// ID: 0x12
+type CraftRecipeRequest struct {
+	WindowID byte
+	RecipeID VarInt
+	MakeAll  bool
 }
 
 // ClientAbilities is used to modify the players current abilities.
 // Currently flying is the only one
 //
 // This is a Minecraft packet
+// ID: 0x13
 type ClientAbilities struct {
 	Flags        byte
 	FlyingSpeed  float32
@@ -168,6 +218,7 @@ type ClientAbilities struct {
 // It also can be sent for droppping items and eating/shooting.
 //
 // This is a Minecraft packet
+// ID: 0x14
 type PlayerDigging struct {
 	Status   byte
 	Location Position
@@ -177,6 +228,7 @@ type PlayerDigging struct {
 // PlayerAction is sent when a player preforms various actions.
 //
 // This is a Minecraft packet
+// ID: 0x15
 type PlayerAction struct {
 	EntityID  VarInt
 	ActionID  VarInt
@@ -187,25 +239,43 @@ type PlayerAction struct {
 // on a vehicle.
 //
 // This is a Minecraft packet
+// ID: 0x16
 type SteerVehicle struct {
 	Sideways float32
 	Forward  float32
 	Flags    byte
 }
 
+// This is a Minecraft packet
+// ID: 0x17
+type CraftingBookData struct {
+	Type               VarInt
+	RecipeID           float32 `if:".Type==0"`
+	CraftingBookOpen   bool    `if:".Type==1"`
+	CraftingBookFilter bool    `if:".Type==1"`
+}
+
 // ResourcePackStatus informs the server of the client's current progress
 // in activating the requested resource pack
 //
 // This is a Minecraft packet
+// ID: 0x18
 type ResourcePackStatus struct {
-	Hash   string
 	Result VarInt
+}
+
+// This is a Minecraft packet
+// ID: 0x19
+type AdvancementTab struct {
+	Action VarInt
+	TabID  VarInt `if:".Action==0"`
 }
 
 // HeldItemChange is sent when the player changes the currently active
 // hotbar slot.
 //
 // This is a Minecraft packet
+// ID: 0x1A
 type HeldItemChange struct {
 	Slot int16
 }
@@ -214,6 +284,7 @@ type HeldItemChange struct {
 // inventory. This is used to spawn items in creative.
 //
 // This is a Minecraft packet
+// ID: 0x1B
 type CreativeInventoryAction struct {
 	Slot        int16
 	ClickedItem ItemStack `as:"raw"`
@@ -222,6 +293,7 @@ type CreativeInventoryAction struct {
 // SetSign sets the text on a sign after placing it.
 //
 // This is a Minecraft packet
+// ID: 0x1C
 type SetSign struct {
 	Location Position
 	Line1    string
@@ -234,6 +306,7 @@ type SetSign struct {
 // arm).
 //
 // This is a Minecraft packet
+// ID: 0x1D
 type ArmSwing struct {
 	Hand VarInt
 }
@@ -241,6 +314,7 @@ type ArmSwing struct {
 // SpectateTeleport is sent by clients in spectator mode to teleport to a player.
 //
 // This is a Minecraft packet
+// ID: 0x1E
 type SpectateTeleport struct {
 	Target UUID `as:"raw"`
 }
@@ -248,6 +322,7 @@ type SpectateTeleport struct {
 // PlayerBlockPlacement is sent when the client tries to place a block.
 //
 // This is a Minecraft packet
+// ID: 0x1F
 type PlayerBlockPlacement struct {
 	Location                  Position
 	Face                      VarInt
@@ -258,6 +333,7 @@ type PlayerBlockPlacement struct {
 // UseItem is sent when the client tries to use an item.
 //
 // This is a Minecraft packet
+// ID: 0x20
 type UseItem struct {
 	Hand VarInt
 }
