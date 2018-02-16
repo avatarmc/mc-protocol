@@ -51,7 +51,8 @@ const (
 const (
 	// SupportedProtocolVersion is current protocol version this package defines
 	// 340 = 1.12.2
-	SupportedProtocolVersion = 340
+	SupportedProtocolVersionName = "1.12.2"
+	SupportedProtocolVersion     = 340
 )
 
 const (
