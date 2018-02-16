@@ -212,3 +212,17 @@ func WriteNBT(w io.Writer, n *nbt.Compound) error {
 	WriteByte(w, byte(nbt.TagCompound))
 	return n.Serialize(w)
 }
+
+func WriteLong(w io.Writer, l uint64) error {
+	var tmp [8]byte
+	tmp[0] = byte(l >> 56)
+	tmp[1] = byte(l >> 48)
+	tmp[2] = byte(l >> 40)
+	tmp[3] = byte(l >> 32)
+	tmp[4] = byte(l >> 24)
+	tmp[5] = byte(l >> 16)
+	tmp[6] = byte(l >> 8)
+	tmp[7] = byte(l >> 0)
+	_, err := w.Write(tmp[:8])
+	return err
+}
