@@ -27,7 +27,7 @@ type Serializable interface {
 	Deserialize(r io.Reader) error
 }
 
-//go:generate stringer -type=State
+//go:generate stringer -type=State -type=NextState
 
 // State defined which state the protocol is in.
 type State int
