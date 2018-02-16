@@ -40,7 +40,7 @@ func parseCondition(con string) conditions {
 	for len(con) > 0 {
 		l := len(con)
 		if l == lastLen {
-			panic ("Not making progress: " + con)
+			panic("Not making progress: " + con)
 		}
 		lastLen = l
 
@@ -49,7 +49,7 @@ func parseCondition(con string) conditions {
 			con = con[1:]
 			v.structField++
 		}
-		pos := strings.IndexFunc(con, func(r rune) bool { return !unicode.In(r, unicode.Letter, unicode.Digit) && r != '&'})
+		pos := strings.IndexFunc(con, func(r rune) bool { return !unicode.In(r, unicode.Letter, unicode.Digit) && r != '&' })
 		if pos == -1 {
 			panic("invalid condition: " + con)
 		}
@@ -59,7 +59,7 @@ func parseCondition(con string) conditions {
 
 		c := condition{l: v}
 
-		pos = strings.IndexFunc(con, func(r rune) bool { return !unicode.IsSymbol(r) && r != '!' && r != '&'})
+		pos = strings.IndexFunc(con, func(r rune) bool { return !unicode.IsSymbol(r) && r != '!' && r != '&' })
 		c.cond = con[:pos]
 		con = con[pos:]
 		con = strings.TrimSpace(con)
@@ -70,7 +70,7 @@ func parseCondition(con string) conditions {
 			con = con[1:]
 		}
 
-		pos = strings.IndexFunc(con, func(r rune) bool { return !unicode.In(r, unicode.Letter, unicode.Digit) && r != '"' && r != '&'})
+		pos = strings.IndexFunc(con, func(r rune) bool { return !unicode.In(r, unicode.Letter, unicode.Digit) && r != '"' && r != '&' })
 		if pos == -1 {
 			pos = len(con)
 		}
