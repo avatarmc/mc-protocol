@@ -28,10 +28,10 @@ type TeleportConfirm struct {
 // This is a Minecraft packet
 // ID: 0x01
 type TabComplete struct {
-	Text      string
+	Text         string
 	AssumeComman bool
-	HasTarget bool
-	Target    Position `if:".HasTarget==true"`
+	HasTarget    bool
+	Target       Position `if:".HasTarget==true"`
 }
 
 // ChatMessage is sent by the client when it sends a chat message or

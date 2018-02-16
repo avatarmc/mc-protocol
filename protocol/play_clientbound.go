@@ -922,8 +922,8 @@ type EntityTeleport struct {
 type Advancements struct {
 	Reset        bool
 	Advancements []Advancement `length:"VarInt"`
-	Remove       []string `length:"VarInt"`
-	Progress     []Progress `length:"VarInt"`
+	Remove       []string      `length:"VarInt"`
+	Progress     []Progress    `length:"VarInt"`
 }
 
 type Advancement struct {
@@ -937,13 +937,13 @@ type Advancement struct {
 }
 
 type AdvancementDisplay struct {
-	Title                format.AnyComponent `as:"json"`
-	Description          format.AnyComponent `as:"json"`
-	Item                 ItemStack `as:"raw"`
-	FrameType            VarInt
-	Flags                int32
-	BackgroundTexture    string `if:".Flags&1 == 1"`
-	X, Y                 float32
+	Title             format.AnyComponent `as:"json"`
+	Description       format.AnyComponent `as:"json"`
+	Item              ItemStack           `as:"raw"`
+	FrameType         VarInt
+	Flags             int32
+	BackgroundTexture string `if:".Flags&1 == 1"`
+	X, Y              float32
 }
 
 type Progress struct {

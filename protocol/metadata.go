@@ -18,10 +18,10 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"github.com/avatarmc/mc-protocol/encoding/nbt"
 	"github.com/avatarmc/mc-protocol/format"
 	"io"
 	"strconv"
-	"github.com/avatarmc/mc-protocol/encoding/nbt"
 )
 
 // Metadata is a simple index -> value map used in the Minecraft protocol.
