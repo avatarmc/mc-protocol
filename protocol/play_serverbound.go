@@ -268,7 +268,7 @@ type ResourcePackStatus struct {
 // ID: 0x19
 type AdvancementTab struct {
 	Action VarInt
-	TabID  VarInt `if:".Action==0"`
+	TabID  string `if:".Action==0"`
 }
 
 // HeldItemChange is sent when the player changes the currently active

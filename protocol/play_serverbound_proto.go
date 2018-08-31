@@ -1005,7 +1005,7 @@ func (a *AdvancementTab) write(ww io.Writer) (err error) {
 		return
 	}
 	if a.Action == 0 {
-		if err = WriteVarInt(ww, a.TabID); err != nil {
+		if err = WriteString(ww, a.TabID); err != nil {
 			return
 		}
 	}
@@ -1016,7 +1016,7 @@ func (a *AdvancementTab) read(rr io.Reader) (err error) {
 		return
 	}
 	if a.Action == 0 {
-		if a.TabID, err = ReadVarInt(rr); err != nil {
+		if a.TabID, err = ReadString(rr); err != nil {
 			return
 		}
 	}
